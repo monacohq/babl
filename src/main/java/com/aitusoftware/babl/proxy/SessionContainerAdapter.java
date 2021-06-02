@@ -40,6 +40,7 @@ import com.aitusoftware.babl.websocket.DisconnectReason;
 import com.aitusoftware.babl.websocket.SendResult;
 import com.aitusoftware.babl.websocket.Session;
 
+import io.aeron.ControlledFragmentAssembler;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.collections.Long2ObjectHashMap;
@@ -74,6 +75,7 @@ public final class SessionContainerAdapter implements ControlledFragmentHandler,
     private final BackPressureStrategy backPressureStrategy;
     private final String agentName;
     private final Broadcast broadcast;
+    private final ControlledFragmentAssembler fragmentHandler;
     private SessionContainerAdapterStatistics sessionContainerAdapterStatistics;
     private int[] topicIds = new int[16];
 
@@ -104,6 +106,8 @@ public final class SessionContainerAdapter implements ControlledFragmentHandler,
         this.backPressureStrategy = backPressureStrategy;
         this.broadcast = broadcast;
         agentName = "babl-session-adapter-" + sessionContainerId;
+
+        this.fragmentHandler = new ControlledFragmentAssembler(this);
     }
 
     /**
@@ -183,7 +187,7 @@ public final class SessionContainerAdapter implements ControlledFragmentHandler,
     public int doWork()
     {
         final int sessionWorkDone =
-            fromApplicationSubscription.controlledPoll(this, sessionAdapterPollFragmentLimit);
+            fromApplicationSubscription.controlledPoll(fragmentHandler, sessionAdapterPollFragmentLimit);
         if (sessionWorkDone == sessionAdapterPollFragmentLimit)
         {
             sessionContainerAdapterStatistics.adapterPollLimitReached();
@@ -192,7 +196,7 @@ public final class SessionContainerAdapter implements ControlledFragmentHandler,
         if (broadcastSubscription != null)
         {
             broadcastWorkDone =
-                broadcastSubscription.controlledPoll(this, sessionAdapterPollFragmentLimit);
+                broadcastSubscription.controlledPoll(fragmentHandler, sessionAdapterPollFragmentLimit);
             if (broadcastWorkDone == sessionAdapterPollFragmentLimit)
             {
                 sessionContainerAdapterStatistics.adapterPollLimitReached();
@@ -312,7 +316,7 @@ public final class SessionContainerAdapter implements ControlledFragmentHandler,
     {
         closeSessionDecoder.wrap(buffer, offset + MessageHeaderDecoder.ENCODED_LENGTH,
             messageHeaderDecoder.blockLength(), messageHeaderDecoder.version());
-        if (applicationMessageDecoder.containerId() == sessionContainerId)
+        if (closeSessionDecoder.containerId() == sessionContainerId)
         {
             final long sessionId = closeSessionDecoder.sessionId();
             final DisconnectReason disconnectReason = DISCONNECT_REASONS[closeSessionDecoder.closeReason()];

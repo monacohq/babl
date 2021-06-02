@@ -22,50 +22,48 @@ import com.aitusoftware.babl.websocket.SendResult;
 import io.aeron.Publication;
 import io.aeron.logbuffer.BufferClaim;
 import io.aeron.logbuffer.ControlledFragmentHandler;
+import org.agrona.concurrent.UnsafeBuffer;
 
-final class ProxyUtil
-{
-    ProxyUtil()
-    {
-    }
+final class ProxyUtil {
 
-    static ControlledFragmentHandler.Action sendResultToAction(final int sendResult)
-    {
-        if (sendResult == SendResult.BACK_PRESSURE)
-        {
-            return ControlledFragmentHandler.Action.ABORT;
-        }
-        return ControlledFragmentHandler.Action.CONTINUE;
-    }
+  ProxyUtil() {
+  }
 
-    static long acquireBuffer(final int length, final Publication publication, final BufferClaim bufferClaim)
-    {
-        long position;
-        position = publication.tryClaim(length, bufferClaim);
-        if (position == Publication.ADMIN_ACTION)
-        {
-            for (int i = 0; i < 3 && position == Publication.ADMIN_ACTION; i++)
-            {
-                position = publication.tryClaim(length, bufferClaim);
-            }
-        }
-        return position;
+  static ControlledFragmentHandler.Action sendResultToAction(final int sendResult) {
+    if (sendResult == SendResult.BACK_PRESSURE) {
+      return ControlledFragmentHandler.Action.ABORT;
     }
+    return ControlledFragmentHandler.Action.CONTINUE;
+  }
 
-    static int offerResultToSendResult(final long result)
-    {
-        if (result == Publication.BACK_PRESSURED)
-        {
-            return SendResult.BACK_PRESSURE;
-        }
-        else if (result == Publication.CLOSED || result == Publication.NOT_CONNECTED)
-        {
-            return SendResult.NOT_CONNECTED;
-        }
-        else if (result == Publication.MAX_POSITION_EXCEEDED)
-        {
-            return SendResult.INVALID_MESSAGE;
-        }
-        return SendResult.BACK_PRESSURE;
+  static long acquireBuffer(final int length, final Publication publication, final BufferClaim bufferClaim) {
+    long position;
+    position = publication.tryClaim(length, bufferClaim);
+    while (position == Publication.ADMIN_ACTION) {
+      position = publication.tryClaim(length, bufferClaim);
     }
+    return position;
+  }
+
+  static long publish(final Publication publication, UnsafeBuffer unsafeBufferFront, UnsafeBuffer unsafeBufferBack) {
+    long position;
+    position = publication
+        .offer(unsafeBufferFront, 0, unsafeBufferFront.capacity(), unsafeBufferBack, 0, unsafeBufferBack.capacity());
+    while (position == Publication.ADMIN_ACTION) {
+      position = publication
+          .offer(unsafeBufferFront, 0, unsafeBufferFront.capacity(), unsafeBufferBack, 0, unsafeBufferBack.capacity());
+    }
+    return position;
+  }
+
+  static int offerResultToSendResult(final long result) {
+    if (result == Publication.BACK_PRESSURED) {
+      return SendResult.BACK_PRESSURE;
+    } else if (result == Publication.CLOSED || result == Publication.NOT_CONNECTED) {
+      return SendResult.NOT_CONNECTED;
+    } else if (result == Publication.MAX_POSITION_EXCEEDED) {
+      return SendResult.INVALID_MESSAGE;
+    }
+    return SendResult.BACK_PRESSURE;
+  }
 }
