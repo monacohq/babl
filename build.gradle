@@ -28,7 +28,7 @@ ext {
 }
 
 apply plugin: 'checkstyle'
-apply plugin: 'signing'
+//apply plugin: 'signing'
 apply plugin: 'maven-publish'
 apply plugin: 'java-library'
 apply plugin: 'com.jfrog.artifactory'
