@@ -1,20 +1,38 @@
 buildscript {
     repositories {
+        maven {
+            // Get the Artifactory url, username, password from system env
+            // If not defined on the system env, then try find them from gradle.properties
+            url((System.getenv("ARTIFACTORY_URL") != null ? System.getenv("ARTIFACTORY_URL") : "${ARTIFACTORY_URL}") + "/deriv-jcenter")
+            credentials {
+                username = System.getenv("ARTIFACTORY_USER")
+                password = System.getenv("ARTIFACTORY_APIKEY")
+            }
+        }
         mavenCentral()
     }
 }
 
 plugins {
+    id 'com.jfrog.artifactory' version '4.18.2' apply false
+    id 'devops-gradle-plugins.jFrogPlugin' version '1.0.1-SNAPSHOT' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
     id 'net.minecrell.licenser' version '0.4.1'
 }
 
+ext {
+    artifactoryUsername = project.buildscript.repositories.maven.credentials.username
+    artifactoryPassword = project.buildscript.repositories.maven.credentials.password
+}
+
 apply plugin: 'checkstyle'
 apply plugin: 'signing'
 apply plugin: 'maven-publish'
 apply plugin: 'java-library'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'devops-gradle-plugins.jFrogPlugin'
 
 def bablVersion = file('version.txt').text.trim()
 group = 'com.aitusoftware'
@@ -22,8 +40,21 @@ version = bablVersion
 
 defaultTasks('clean', 'licenseFormat', 'check', 'assemble', 'shadowJar')
 
+jfrog {
+    artifactoryUsername = rootProject.artifactoryUsername
+    artifactoryPassword = rootProject.artifactoryPassword
+    buildName = rootProject.jfrog.buildName
+    mavenDevRepo = 'deriv-maven-dev-local'
+    mavenProdRepo = 'deriv-maven-prod-local'
+}
 repositories {
-    mavenCentral()
+    maven {
+        url jfrog.artifactoryUrl + "/deriv-jcenter"
+        credentials {
+            username = jfrog.artifactoryUsername
+            password = jfrog.artifactoryPassword
+        }
+    }
 }
 
 ext {
@@ -83,14 +114,32 @@ publishing {
 
     repositories {
         maven {
-            name = 'MavenCentral'
-            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            url jfrog.artifactoryUrl + "/deriv-jcenter"
             credentials {
-                username = sonatypeUsername
-                password = sonatypePassword
+                username = jfrog.artifactoryUsername
+                password = jfrog.artifactoryPassword
             }
         }
     }
+}
+artifactory {
+    contextUrl = jfrog.artifactoryUrl
+    publish {
+        repository {
+            repoKey = jfrog.mavenDevRepo // The Artifactory repository key to publish to
+            username = jfrog.artifactoryUsername
+            password = jfrog.artifactoryPassword
+        }
+        defaults {
+            // Reference to Gradle publications defined in the build script.
+            // This is how we tell the Artifactory Plugin which artifacts should be
+            // published to Artifactory.
+            publications('mavenJava')
+            publishPom = true
+            publishArtifacts = true
+        }
+    }
+    clientConfig.info.setBuildNumber(jfrog.buildId + jfrog.mavenBuildIdSuffix)
 }
 
 signing {

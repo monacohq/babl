@@ -1,1 +1,13 @@
+pluginManagement {
+    repositories {
+        maven {
+            url = ((System.getenv("ARTIFACTORY_URL") != null ? System.getenv("ARTIFACTORY_URL") : "${ARTIFACTORY_URL}") + "/deriv-jcenter")
+            credentials {
+                username = System.getenv("ARTIFACTORY_USER")
+                password = System.getenv("ARTIFACTORY_APIKEY")
+            }
+        }
+    }
+}
+
 rootProject.name = 'babl'
