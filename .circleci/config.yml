@@ -50,7 +50,7 @@ jobs:
           command: |
             ./gradlew :jfrogInfo > jfrogInfo.txt
             [[ $CIRCLE_BRANCH == "develop" ]] || [[ $CIRCLE_BRANCH == release/* ]] || [[ $CIRCLE_BRANCH == "master" ]] && publish_opts="artifactoryPublish configArtifactory"
-            ./gradlew clean build -x checkLicenseMain -x test -x checkstyleMain $publish_opts $grade_build_opts --info --refresh-dependencies
+            ./gradlew clean build -x checkLicenseMain -x test -x checkstyleMain -x checkstyleJmh $publish_opts $grade_build_opts --info --refresh-dependencies
 
 
       - save_cache:
