@@ -17,6 +17,7 @@
  */
 package com.aitusoftware.babl.websocket;
 
+import com.aitusoftware.babl.user.ContentType;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
@@ -50,6 +51,7 @@ import com.aitusoftware.babl.user.Application;
 import com.aitusoftware.babl.user.BroadcastSource;
 import com.aitusoftware.babl.websocket.broadcast.SessionBroadcast;
 
+import org.agrona.DirectBuffer;
 import org.agrona.ErrorHandler;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.concurrent.Agent;
@@ -59,6 +61,7 @@ import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemEpochClock;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.errors.DistinctErrorLog;
 import org.agrona.concurrent.errors.LoggingErrorHandler;
 
@@ -80,6 +83,10 @@ public final class BablServer
      */
     public static void main(final String[] args)
     {
+        final byte[] bytes = "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456"
+            .getBytes();
+        UnsafeBuffer buffer = new UnsafeBuffer(bytes);
+
         final BablConfig bablConfig;
         if (args.length > 0)
         {
@@ -89,6 +96,57 @@ public final class BablServer
         {
             bablConfig = new BablConfig();
         }
+        bablConfig.applicationConfig().application(new Application() {
+            @Override
+            public int onSessionConnected(Session session) {
+                StringBuilder sb = new StringBuilder();
+                System.out.println(session.id());
+                session.getRemoteAddress(sb);
+                System.out.println(sb);
+                return SendResult.OK;
+            }
+
+            @Override
+            public int onSessionDisconnected(Session session, DisconnectReason reason) {
+                System.out.println("disconnected");
+                return SendResult.OK;
+            }
+
+            @Override
+            public int onSessionMessage(Session session, ContentType contentType, DirectBuffer msg, int offset, int length) {
+                System.out.println("got msg");
+                session.send(ContentType.TEXT, buffer, 0, buffer.capacity());
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                session.close(DisconnectReason.REMOTE_DISCONNECT);
+                return SendResult.OK;
+            }
+        });
+        bablConfig.applicationConfig().additionalWork(new Agent() {
+            @Override
+            public int doWork() throws Exception {
+                Thread.sleep(1);
+                return 0;
+            }
+
+            @Override
+            public String roleName() {
+                return "testing123";
+            }
+
+            @Override
+            public void onStart() {
+                System.out.println("start now");
+            }
+
+            @Override
+            public void onClose() {
+                System.out.println("close now");
+            }
+        });
         try (SessionContainers sessionContainers = launch(bablConfig))
         {
             sessionContainers.start();

@@ -19,6 +19,7 @@ package com.aitusoftware.babl.websocket;
 
 import static com.aitusoftware.babl.io.BufferUtil.increaseCapacity;
 
+import com.aitusoftware.babl.config.SessionContainerConfig;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -50,6 +51,10 @@ public final class WebSocketSession implements Pooled, Session
     private static final int UPGRADE_SEND_BUFFER_SIZE = 1024;
     private static final short NULL_CLOSE_REASON = Short.MIN_VALUE;
     private static final long CLOSING_TIMEOUT_MS = 3_000L;
+
+    private static final String HEADER_X_FORWARDED_FOR_PROPERTY = "babl.server.connection.header.xforward";
+    private static final String HEADER_X_FORWARDED_FOR = System.getProperty(HEADER_X_FORWARDED_FOR_PROPERTY, "X-FORWARDED-FOR").toUpperCase();
+    private final StringBuilder sbHeaderXForwardValue = new StringBuilder(40);
 
     private final FrameDecoder frameDecoder;
     private final FrameEncoder frameEncoder;
@@ -120,6 +125,7 @@ public final class WebSocketSession implements Pooled, Session
         }
         selectionKey = null;
         closingTimestampMs = 0L;
+        sbHeaderXForwardValue.setLength(0);
     }
 
     void init(
@@ -183,6 +189,20 @@ public final class WebSocketSession implements Pooled, Session
     {
         sessionClosing(Constants.CLOSE_REASON_NORMAL);
         return SendResult.OK;
+    }
+
+    @Override
+    public void getRemoteAddress(StringBuilder stringBuilderAddress) {
+        stringBuilderAddress.setLength(0);
+
+        if (sbHeaderXForwardValue.length() == 0) {
+            final String unformatedAddress = inputChannel.toString();
+            final int lastSlashIndex = unformatedAddress.lastIndexOf('/');
+            stringBuilderAddress
+                .append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
+        } else {
+            stringBuilderAddress.append(sbHeaderXForwardValue);
+        }
     }
 
     /**
@@ -441,7 +461,7 @@ public final class WebSocketSession implements Pooled, Session
         }
         Logger.log(Category.CONNECTION, "Session %d attempting upgrade with %d available bytes%n",
             id, receiveBuffer.limit());
-        if (connectionUpgrade.handleUpgrade(receiveBuffer, handshakeSendBuffer))
+        if (connectionUpgrade.handleUpgrade(receiveBuffer, handshakeSendBuffer, this::headerAcceptor))
         {
             Logger.log(Category.CONNECTION, "Session %d upgraded%n", id);
             setState(SessionState.VALIDATING);
@@ -462,6 +482,25 @@ public final class WebSocketSession implements Pooled, Session
         else
         {
             receiveBuffer.reset();
+        }
+    }
+
+    private void headerAcceptor(CharSequence key, CharSequence value) {
+        if (HEADER_X_FORWARDED_FOR.length() != key.length()) {
+            return;
+        }
+        for (int i = 0; i < HEADER_X_FORWARDED_FOR.length(); i++) {
+            if (HEADER_X_FORWARDED_FOR.charAt(i) != Character.toUpperCase(key.charAt(i))) {
+                return;
+            }
+        }
+        sbHeaderXForwardValue.setLength(0);
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            if (c == ',') {
+                break;
+            }
+            sbHeaderXForwardValue.append(c);
         }
     }
 

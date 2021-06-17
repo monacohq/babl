@@ -27,6 +27,7 @@ import com.aitusoftware.babl.log.Category;
 import com.aitusoftware.babl.log.Logger;
 import com.aitusoftware.babl.pool.ObjectPool;
 import com.aitusoftware.babl.pool.Pooled;
+import java.util.function.BiConsumer;
 
 class ConnectionUpgrade implements Pooled
 {
@@ -67,7 +68,12 @@ class ConnectionUpgrade implements Pooled
         }
     }
 
-    boolean handleUpgrade(final ByteBuffer input, final ByteBuffer output)
+    boolean handleUpgrade(final ByteBuffer input, final ByteBuffer output) {
+        return handleUpgrade(input, output, null);
+    }
+
+    boolean handleUpgrade(final ByteBuffer input, final ByteBuffer output,
+        BiConsumer<CharSequence, CharSequence> headerAcceptor)
     {
         handshakeResponseOutputBuffer = output;
         final boolean decoded = keyDecoder.decode(input, this::writeUpgradeResponse);
@@ -77,6 +83,10 @@ class ConnectionUpgrade implements Pooled
             final ValidationResult validationResult = validationResultPool.acquire();
             validationResult.sessionId(sessionId);
             connectionValidator.validateConnection(validationResult, keyDecoder, validationResultPublisher);
+
+            if (headerAcceptor != null) {
+                keyDecoder.accept(headerAcceptor);
+            }
         }
         return decoded;
     }

@@ -35,8 +35,14 @@ import com.aitusoftware.babl.websocket.DisconnectReason;
 import com.aitusoftware.babl.websocket.SendResult;
 import com.aitusoftware.babl.websocket.Session;
 
+import com.aitusoftware.babl.websocket.WebSocketSession;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SocketChannel;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
+import org.agrona.UnsafeAccess;
 import org.agrona.collections.Long2ObjectHashMap;
 
 import io.aeron.Publication;
@@ -62,6 +68,8 @@ public final class ApplicationProxy implements Application
 
     private Publication applicationsPublication;
     private SessionContainerStatistics sessionContainerStatistics;
+
+    private final StringBuilder sbAddress = new StringBuilder(40);
 
     /**
      * Constructor.
@@ -104,6 +112,13 @@ public final class ApplicationProxy implements Application
             sessionOpenEncoder.wrapAndApplyHeader(bufferClaim.buffer(), bufferClaim.offset(), headerEncoder);
             sessionOpenEncoder.sessionId(session.id());
             sessionOpenEncoder.containerId(sessionContainerId);
+            if (session instanceof WebSocketSession) {
+                WebSocketSession webSocketSession = (WebSocketSession) session;
+                webSocketSession.getRemoteAddress(sbAddress);
+                sessionOpenEncoder.sourceAddress(sbAddress);
+            } else{
+                sessionOpenEncoder.sourceAddress("");
+            }
             bufferClaim.commit();
             Logger.log(Category.PROXY, "[%d] ApplicationProxy onSessionConnected(sessionId: %d)%n",
                 sessionContainerId, session.id());

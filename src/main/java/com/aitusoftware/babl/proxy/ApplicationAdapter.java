@@ -65,6 +65,7 @@ public final class ApplicationAdapter implements Agent, ControlledFragmentHandle
     private final int applicationAdapterPollFragmentLimit;
     private final ApplicationAdapterStatistics applicationAdapterStatistics;
     private final EventLoopDurationReporter eventLoopDurationReporter;
+    private final StringBuilder sbSourceAddress = new StringBuilder(40);
 
     /**
      * Constructor.
@@ -200,6 +201,9 @@ public final class ApplicationAdapter implements Agent, ControlledFragmentHandle
         }
         Logger.log(Category.PROXY, "[%d] ApplicationAdapter onSessionConnected(sessionId: %d)%n",
             sessionOpenDecoder.containerId(), sessionOpenDecoder.sessionId());
+        sbSourceAddress.setLength(0);
+        sessionOpenDecoder.getSourceAddress(sbSourceAddress);
+        sessionProxy.updateSourceAddress(sbSourceAddress);
         final int applicationResult = application.onSessionConnected(sessionProxy);
         return sendResultToAction(applicationResult);
     }

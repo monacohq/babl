@@ -68,6 +68,8 @@ final class SessionProxy implements Session, Pooled {
   private int sessionContainerId;
   private Publication currentServerPublication;
 
+    private final StringBuilder sbSourceAddress = new StringBuilder(40);
+
   SessionProxy(
       final Publication[] publications,
       final ApplicationAdapterStatistics applicationAdapterStatistics) {
@@ -160,6 +162,12 @@ final class SessionProxy implements Session, Pooled {
   }
 
   @Override
+    public void getRemoteAddress(StringBuilder sb) {
+        sb.setLength(0);
+        sb.append(sbSourceAddress);
+    }
+
+    @Override
   public long id() {
     return sessionId;
   }
@@ -176,8 +184,13 @@ final class SessionProxy implements Session, Pooled {
         sessionId, sessionContainerId);
   }
 
-  static final class Factory implements Supplier<SessionProxy> {
+    public void updateSourceAddress(StringBuilder sbSourceAddress) {
+        this.sbSourceAddress.setLength(0);
+        this.sbSourceAddress.append(sbSourceAddress);
+    }
 
+    static final class Factory implements Supplier<SessionProxy>
+    {
     private final Publication[] toServerPublications;
     private final ApplicationAdapterStatistics applicationAdapterStatistics;
 

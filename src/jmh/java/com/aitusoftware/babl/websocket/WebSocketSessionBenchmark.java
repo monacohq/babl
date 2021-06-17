@@ -31,6 +31,7 @@ import com.aitusoftware.babl.time.SingleThreadedCachedClock;
 import com.aitusoftware.babl.user.Application;
 import com.aitusoftware.babl.user.ContentType;
 
+import java.util.function.BiConsumer;
 import org.agrona.DirectBuffer;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -190,7 +191,8 @@ public class WebSocketSessionBenchmark
         }
 
         @Override
-        boolean handleUpgrade(final ByteBuffer input, final ByteBuffer output)
+        boolean handleUpgrade(final ByteBuffer input, final ByteBuffer output,
+            BiConsumer<CharSequence, CharSequence> headerAcceptor)
         {
             return true;
         }

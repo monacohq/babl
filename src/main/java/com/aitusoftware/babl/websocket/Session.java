@@ -31,4 +31,6 @@ public interface Session
     long id();
 
     int close(DisconnectReason disconnectReason);
+
+    void getRemoteAddress(StringBuilder sb);
 }

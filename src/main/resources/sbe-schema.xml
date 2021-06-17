@@ -35,11 +35,13 @@
             <type name="length" primitiveType="uint32" maxValue="8388608"/>
             <type name="varData" primitiveType="uint8" length="0"/>
         </composite>
+        <type characterEncoding="ASCII" length="40" name="ascii40" primitiveType="char"/>
     </types>
     <!-- messages from server to application -->
     <sbe:message name="SessionOpened" id="1" description="Session opened event">
         <field name="sessionId" id="1" type="int64"/>
         <field name="containerId" id="2" type="int32"/>
+        <field name="sourceAddress" id="3" type="ascii40"/>
     </sbe:message>
     <sbe:message name="SessionClosed" id="2" description="Session closed event">
         <field name="sessionId" id="1" type="int64"/>
