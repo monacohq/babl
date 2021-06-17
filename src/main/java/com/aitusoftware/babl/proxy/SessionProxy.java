@@ -162,9 +162,10 @@ final class SessionProxy implements Session, Pooled {
   }
 
   @Override
-    public void getRemoteAddress(StringBuilder sb) {
+    public StringBuilder getRemoteAddress(StringBuilder sb) {
         sb.setLength(0);
         sb.append(sbSourceAddress);
+        return sb;
     }
 
     @Override
@@ -176,6 +177,7 @@ final class SessionProxy implements Session, Pooled {
   public void reset() {
     this.sessionId = Long.MIN_VALUE;
     this.sessionContainerId = Integer.MIN_VALUE;
+    this.sbSourceAddress.setLength(0);
   }
 
   @Override

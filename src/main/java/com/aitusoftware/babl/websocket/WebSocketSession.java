@@ -192,7 +192,7 @@ public final class WebSocketSession implements Pooled, Session
     }
 
     @Override
-    public void getRemoteAddress(StringBuilder stringBuilderAddress) {
+    public StringBuilder getRemoteAddress(StringBuilder stringBuilderAddress) {
         stringBuilderAddress.setLength(0);
 
         if (sbHeaderXForwardValue.length() == 0) {
@@ -203,6 +203,7 @@ public final class WebSocketSession implements Pooled, Session
         } else {
             stringBuilderAddress.append(sbHeaderXForwardValue);
         }
+        return stringBuilderAddress;
     }
 
     /**

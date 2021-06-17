@@ -32,5 +32,5 @@ public interface Session
 
     int close(DisconnectReason disconnectReason);
 
-    void getRemoteAddress(StringBuilder sb);
+    StringBuilder getRemoteAddress(StringBuilder sb);
 }
