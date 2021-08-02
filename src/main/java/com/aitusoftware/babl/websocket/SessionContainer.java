@@ -93,6 +93,10 @@ final class SessionContainer implements Agent, AutoCloseable
     private final int activeSessionLimit;
     private long lastServiceTimeMs;
     private AgentRunner serverAgentRunner;
+    private LoggingErrorHandler errorHandler;
+    private RuntimeException sendException;
+    private RuntimeException readException1;
+    private RuntimeException readException2;
 
     /**
      * Constructs a web socket server that will dispatch messages to the supplied {@code Application}.
@@ -191,7 +195,7 @@ final class SessionContainer implements Agent, AutoCloseable
     {
         sessionContainerConfig.bufferPoolPreAllocator().preAllocate(bufferPool);
         final DistinctErrorLog errorLog = new DistinctErrorLog(serverMarkFile.errorBuffer(), clock);
-        final LoggingErrorHandler errorHandler = new LoggingErrorHandler(errorLog);
+        this.errorHandler = new LoggingErrorHandler(errorLog);
         // process additional work Agent first before the Server Agent, which will read more data from the network
         final Agent serverWork = additionalWork == null ? this : new DoubleAgent(additionalWork, this);
         serverAgentRunner = new AgentRunner(sessionContainerConfig.serverIdleStrategy(sessionContainerId),
@@ -327,7 +331,15 @@ final class SessionContainer implements Agent, AutoCloseable
         {
             final long sendSessionId = iterator.nextValue();
             final WebSocketSession session = activeSessionMap.get(sendSessionId);
-            workCount += session.doSendWork();
+            if (session != null) {
+                workCount += session.doSendWork();
+            } else {
+                sessionDataListener.sendDataProcessed(sendSessionId);
+                if (sendException == null) {
+                    sendException = new RuntimeException("SendData NPE");
+                }
+                errorHandler.onError(sendException);
+            }
         }
         return workCount;
     }
@@ -343,7 +355,15 @@ final class SessionContainer implements Agent, AutoCloseable
             {
                 final long receiveSessionId = iterator.nextValue();
                 final WebSocketSession session = activeSessionMap.get(receiveSessionId);
-                workCount += session.doReceiveWork();
+                if (session != null) {
+                    workCount += session.doReceiveWork();
+                } else {
+                    sessionDataListener.receiveDataProcessed(receiveSessionId);
+                    if (readException1 == null) {
+                        readException1 = new RuntimeException("ReadData1 NPE");
+                    }
+                    errorHandler.onError(readException1);
+                }
             }
         }
         else
@@ -353,7 +373,15 @@ final class SessionContainer implements Agent, AutoCloseable
             {
                 final long receiveSessionId = iterator.nextLong();
                 final WebSocketSession session = activeSessionMap.get(receiveSessionId);
-                workCount += session.doReceiveWork();
+                if (session != null) {
+                    workCount += session.doReceiveWork();
+                } else {
+                    sessionDataListener.receiveDataProcessed(receiveSessionId);
+                    if (readException2 == null) {
+                        readException2 = new RuntimeException("ReadData2 NPE");
+                    }
+                    errorHandler.onError(readException2);
+                }
             }
         }
         return workCount;
