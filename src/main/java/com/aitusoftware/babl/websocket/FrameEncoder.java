@@ -138,6 +138,8 @@ final class FrameEncoder
         if (frameCount * maxFramePayloadSize < length)
         {
             frameCount++;
+        } else if (length == 0) {
+            frameCount = 1;
         }
 
         final int bufferRequired = (frameCount * frameHeaderLength) + length + headerPadding;
