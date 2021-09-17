@@ -44,6 +44,7 @@ final class PingAgent
     private long pongResponseDeadlineMs = Long.MAX_VALUE;
     private boolean awaitingPong = false;
     private int pongPayloadLength;
+    private boolean hasPong;
     private long sessionId;
 
     PingAgent(
@@ -102,6 +103,7 @@ final class PingAgent
         if (pongRequired() && tryWritePong())
         {
             pongPayloadLength = 0;
+            hasPong = false;
             sessionDataListener.sendDataAvailable();
             workDone = 1;
         }
@@ -132,6 +134,7 @@ final class PingAgent
     {
         pongPayloadBuffer.putBytes(0, payloadBuffer, offset, length);
         pongPayloadLength = length;
+        hasPong = true;
     }
 
     private boolean pingRequired(final long time)
@@ -164,7 +167,7 @@ final class PingAgent
 
     boolean pongRequired()
     {
-        return pongPayloadLength != 0;
+        return hasPong;
     }
 
     abstract static class PingPayloadSupplier
