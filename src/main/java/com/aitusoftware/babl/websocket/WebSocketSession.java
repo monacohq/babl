@@ -247,7 +247,7 @@ public final class WebSocketSession implements Pooled, Session
         return workDone;
     }
 
-    int doSendWork() throws IOException
+    public int doSendWork() throws IOException
     {
         if (closed)
         {
