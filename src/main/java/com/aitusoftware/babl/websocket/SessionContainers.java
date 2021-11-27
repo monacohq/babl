@@ -31,6 +31,14 @@ public final class SessionContainers implements AutoCloseable
     private final SessionContainer[] sessionContainers;
     private final List<AutoCloseable> dependencies;
 
+    public SessionContainer[] getSessionContainers() {
+        return sessionContainers;
+    }
+
+    public List<AutoCloseable> getDependencies() {
+        return dependencies;
+    }
+
     SessionContainers(final SessionContainer sessionContainer)
     {
         this(new SessionContainer[] {sessionContainer}, Collections.emptyList());
