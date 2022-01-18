@@ -104,7 +104,7 @@ public final class PropertiesLoader
                 () -> new IllegalArgumentException(String.format("Cannot load resource: %s", propertyFile)));
     }
 
-    private static void load(
+    public static void load(
         final Properties properties,
         final ApplicationConfig applicationConfig,
         final SessionContainerConfig sessionContainerConfig,
