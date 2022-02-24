@@ -129,6 +129,10 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
                                 break;
                             case SEC_WEBSOCKET_PROTOCOL:
                                 isSecWSProtocol = true;
+                                final HttpHeader secHeader = httpHeaderPool.acquire();
+                                secHeader.key.append(SEC_WEBSOCKET_PROTOCOL_HEADER);
+                                secHeader.value.append(accumulator);
+                                httpHeaders.add(secHeader);
                                 break;
                         }
                         accumulator.setLength(0);
