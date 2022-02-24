@@ -1,1 +1,1 @@
-0.11.1-cdc-8-support-sec-websocket-protocol
+0.11.2-cdc-support-sec-websocket-protocol
