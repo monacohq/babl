@@ -36,6 +36,8 @@ class ConnectionUpgrade implements Pooled
             "Upgrade: websocket\r\n" +
             "Connection: Upgrade\r\n" +
             "Sec-WebSocket-Accept: ").getBytes(StandardCharsets.UTF_8);
+    private static final byte[] SEC_WEBSOCKET_PROTOCOL_TOKEN =
+        ("\r\nSec-WebSocket-Protocol: token").getBytes(StandardCharsets.UTF_8);
     private static final byte[] RESPONSE_MESSAGE_END =
         "\r\n\r\n".getBytes(StandardCharsets.UTF_8);
     private static final byte[] WEB_SOCKET_HANDSHAKE_MAGIC_VALUE =
@@ -102,7 +104,7 @@ class ConnectionUpgrade implements Pooled
         keyDecoder.reset();
     }
 
-    private void writeUpgradeResponse(final CharSequence key)
+    private void writeUpgradeResponse(final CharSequence key, boolean isSecWSProtocol)
     {
         sha1.reset();
         for (int i = 0; i < key.length(); i++)
@@ -115,6 +117,11 @@ class ConnectionUpgrade implements Pooled
         handshakeResponseOutputBuffer.put(RESPONSE_MESSAGE_START);
 
         handshakeResponseOutputBuffer.put(Base64.getEncoder().encode(hashed));
+
+        if (isSecWSProtocol)
+        {
+            handshakeResponseOutputBuffer.put(SEC_WEBSOCKET_PROTOCOL_TOKEN);
+        }
         handshakeResponseOutputBuffer.put(RESPONSE_MESSAGE_END);
         handshakeResponseOutputBuffer = null;
     }

@@ -120,6 +120,26 @@ class KeyDecoderTest
         "cache-control: no-cache\r\n" +
         "\r\n";
 
+    static final String SEC_WEBSOCKET_PROTOCOL_HEADER = "" +
+        "GET / HTTP/1.1\r\n" +
+        "Host: 127.0.0.1:8080\r\n" +
+        "User-Agent: MegaBrowser 1.0\r\n" +
+        "Accept: */*\r\n" +
+        "Accept-Language: en-US,en;q=0.5\r\n" +
+        "Accept-Encoding: gzip, deflate\r\n" +
+        "Sec-WebSocket-Version: 13\r\n" +
+        "Origin: null\r\n" +
+        "Sec-WebSocket-Extensions: permessage-deflate\r\n" +
+        "Sec-WebSocket-Key: " +
+        WEB_SOCKET_KEY +
+        "\r\n" +
+        "Sec-WebSocket-Protocol: token, exchange_token, account_id\r\n"+
+        "Connection: keep-alive, Upgrade\r\n" +
+        "Pragma: no-cache\r\n" +
+        "Cache-Control: no-cache\r\n" +
+        "Upgrade: websocket\r\n" +
+        "\r\n";
+
     private final KeyDecoder keyDecoder = new KeyDecoder();
     private byte[] capturedKey;
 
@@ -176,7 +196,7 @@ class KeyDecoderTest
         assertThat(buffer.position()).isEqualTo(httpRequest.indexOf("\r\n\r\n") + 4);
     }
 
-    private void captureCharKey(final CharSequence key)
+    private void captureCharKey(final CharSequence key, boolean dummy)
     {
         capturedKey = key.toString().getBytes(StandardCharsets.US_ASCII);
     }
