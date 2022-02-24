@@ -58,9 +58,9 @@ class ConnectionUpgradeTest
 
         assertThat(new String(output.array(), 0, output.remaining())).contains(
             "HTTP/1.1 101 Switching Protocols\r\n" +
-                "Upgrade: websocket\r\n" +
-                "Connection: Upgrade\r\n" +
-                "Sec-WebSocket-Accept: dYmglNOBLQdZMTi1zvufMrlbcZI=\r\n" +
-                "Sec-WebSocket-Protocol: token\r\n");
+            "Upgrade: websocket\r\n" +
+            "Connection: Upgrade\r\n" +
+            "Sec-WebSocket-Accept: dYmglNOBLQdZMTi1zvufMrlbcZI=\r\n" +
+            "Sec-WebSocket-Protocol: token\r\n");
     }
 }

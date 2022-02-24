@@ -133,7 +133,7 @@ class KeyDecoderTest
         "Sec-WebSocket-Key: " +
         WEB_SOCKET_KEY +
         "\r\n" +
-        "Sec-WebSocket-Protocol: token, exchange_token, account_id\r\n"+
+        "Sec-WebSocket-Protocol: token, exchange_token, account_id\r\n" +
         "Connection: keep-alive, Upgrade\r\n" +
         "Pragma: no-cache\r\n" +
         "Cache-Control: no-cache\r\n" +
@@ -196,7 +196,7 @@ class KeyDecoderTest
         assertThat(buffer.position()).isEqualTo(httpRequest.indexOf("\r\n\r\n") + 4);
     }
 
-    private void captureCharKey(final CharSequence key, boolean dummy)
+    private void captureCharKey(final CharSequence key, final boolean dummy)
     {
         capturedKey = key.toString().getBytes(StandardCharsets.US_ASCII);
     }
