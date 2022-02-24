@@ -1,1 +1,1 @@
-0.11.1-cdc-expose-prop-loader
+0.11.2-cdc-support-sec-websocket-protocol

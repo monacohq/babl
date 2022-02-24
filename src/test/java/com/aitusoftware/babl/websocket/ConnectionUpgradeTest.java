@@ -34,6 +34,9 @@ class ConnectionUpgradeTest
         new ConnectionUpgrade(new ObjectPool<>(ValidationResult::new, 8),
         new AlwaysValidConnectionValidator(), (b) -> true);
 
+    private static final ByteBuffer SEC_WS_PROTOCOL_INPUT = ByteBuffer.wrap(
+        KeyDecoderTest.SEC_WEBSOCKET_PROTOCOL_HEADER.getBytes(StandardCharsets.UTF_8));
+
     @Test
     void shouldHandleConnectionUpgrade()
     {
@@ -45,5 +48,19 @@ class ConnectionUpgradeTest
             "Upgrade: websocket\r\n" +
             "Connection: Upgrade\r\n" +
             "Sec-WebSocket-Accept: dYmglNOBLQdZMTi1zvufMrlbcZI=");
+    }
+
+    @Test
+    void shouldHandleSecWebsocketProtocolConnectionUpgrade()
+    {
+        final ByteBuffer output = ByteBuffer.allocate(512);
+        connectionUpgrade.handleUpgrade(SEC_WS_PROTOCOL_INPUT, output);
+
+        assertThat(new String(output.array(), 0, output.remaining())).contains(
+            "HTTP/1.1 101 Switching Protocols\r\n" +
+            "Upgrade: websocket\r\n" +
+            "Connection: Upgrade\r\n" +
+            "Sec-WebSocket-Accept: dYmglNOBLQdZMTi1zvufMrlbcZI=\r\n" +
+            "Sec-WebSocket-Protocol: token\r\n");
     }
 }

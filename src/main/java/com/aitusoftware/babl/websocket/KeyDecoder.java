@@ -35,6 +35,8 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
     private static final String CONNECTION_HEADER = "connection";
     //sec-websocket-version: 13
     private static final String SEC_WEBSOCKET_VERSION_HEADER = "sec-websocket-version";
+    //sec-websocket-protocol: token, {exchange_token}
+    private static final String SEC_WEBSOCKET_PROTOCOL_HEADER = "sec-websocket-protocol";
     private static final String GET_REQUEST = "get /";
     private static final String WEBSOCKET_PATTERN = "websocket";
     private static final String UPGRADE_PATTERN = "upgrade";
@@ -45,9 +47,11 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
     private final ObjectPool<HttpHeader> httpHeaderPool = new ObjectPool<>(HttpHeader::new, 8);
     private final List<HttpHeader> httpHeaders = new ArrayList<>();
     private Header header = Header.UNHANDLED;
+    private boolean isSecWSProtocol = false;
 
     void reset()
     {
+        isSecWSProtocol = false;
         accumulator.setLength(0);
         unhandledHeaderKey.setLength(0);
         secWebSocketKey.setLength(0);
@@ -58,7 +62,7 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
 
     boolean decode(
         final ByteBuffer input,
-        final Consumer<CharSequence> webSocketSecKeyHandler)
+        final BiConsumer<CharSequence,Boolean> webSocketSecKeyHandler)
     {
         State state = State.READ_HEADER_KEY;
         boolean keyDecoded = false;
@@ -123,6 +127,13 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
                                 httpHeader.value.append(accumulator);
                                 httpHeaders.add(httpHeader);
                                 break;
+                            case SEC_WEBSOCKET_PROTOCOL:
+                                isSecWSProtocol = true;
+                                final HttpHeader secHeader = httpHeaderPool.acquire();
+                                secHeader.key.append(SEC_WEBSOCKET_PROTOCOL_HEADER);
+                                secHeader.value.append(accumulator);
+                                httpHeaders.add(secHeader);
+                                break;
                         }
                         accumulator.setLength(0);
                         state = State.READ_HEADER_KEY;
@@ -146,7 +157,7 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
             upgradeHeaderPresent && endOfHttpRequest != 0;
         if (processingCompleted)
         {
-            webSocketSecKeyHandler.accept(secWebSocketKey);
+            webSocketSecKeyHandler.accept(secWebSocketKey, isSecWSProtocol ? Boolean.TRUE : Boolean.FALSE);
         }
         return processingCompleted;
     }
@@ -179,6 +190,10 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
         {
             header = Header.CONNECTION;
         }
+        else if (charSequencesEqual(SEC_WEBSOCKET_PROTOCOL_HEADER, accumulator))
+        {
+            header = Header.SEC_WEBSOCKET_PROTOCOL;
+        }
         else
         {
             unhandledHeaderKey.setLength(0);
@@ -203,7 +218,8 @@ final class KeyDecoder implements Consumer<BiConsumer<CharSequence, CharSequence
         SEC_WEBSOCKET_VERSION,
         UPGRADE,
         CONNECTION,
-        UNHANDLED
+        UNHANDLED,
+        SEC_WEBSOCKET_PROTOCOL
     }
 
     private enum State
