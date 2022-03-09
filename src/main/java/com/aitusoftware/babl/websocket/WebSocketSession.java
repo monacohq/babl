@@ -196,10 +196,12 @@ public final class WebSocketSession implements Pooled, Session
         stringBuilderAddress.setLength(0);
 
         if (sbHeaderXForwardValue.length() == 0) {
-            final String unformatedAddress = inputChannel.toString();
-            final int lastSlashIndex = unformatedAddress.lastIndexOf('/');
-            stringBuilderAddress
-                .append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
+            if (inputChannel != null) {
+                final String unformatedAddress = inputChannel.toString();
+                final int lastSlashIndex = unformatedAddress.lastIndexOf('/');
+                stringBuilderAddress
+                    .append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
+            }
         } else {
             stringBuilderAddress.append(sbHeaderXForwardValue);
         }
