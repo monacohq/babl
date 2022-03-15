@@ -21,7 +21,7 @@ import com.aitusoftware.babl.user.ContentType;
 
 import org.agrona.DirectBuffer;
 
-interface MessageReceiver
+public interface MessageReceiver
 {
     int onMessage(WebSocketSession session, ContentType contentType, DirectBuffer buffer, int offset, int length);
 
