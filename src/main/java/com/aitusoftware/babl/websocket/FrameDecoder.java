@@ -34,7 +34,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
-final class FrameDecoder
+final public class FrameDecoder
 {
     private static final int MAX_PAYLOAD_SIZE = Integer.MAX_VALUE / 2;
     private static final int MASK_COPY_CHUNK_SIZE_BYTES = 8;
@@ -64,7 +64,7 @@ final class FrameDecoder
     private boolean hasQueuedMessage;
     private long sessionId;
 
-    FrameDecoder(
+    public FrameDecoder(
         final MessageReceiver messageReceiver,
         final SessionConfig sessionConfig,
         final BufferPool bufferPool,
@@ -82,7 +82,7 @@ final class FrameDecoder
         this.internalBufferMaxCapacity = sessionConfig.maxSessionDecodeBufferSize();
     }
 
-    int decode(final ByteBuffer payload, final WebSocketSession session)
+    public int decode(final ByteBuffer payload, final WebSocketSession session)
     {
         if (hasQueuedMessage)
         {
@@ -488,18 +488,18 @@ final class FrameDecoder
         initialFrameOpCode = NO_OP_CODE;
     }
 
-    boolean hasQueuedMessage()
+    public boolean hasQueuedMessage()
     {
         return hasQueuedMessage;
     }
 
-    void reset()
+    public void reset()
     {
         resetAfterMessageDelivery();
         bufferPool.release(dstBuffer.byteBuffer());
     }
 
-    void init(final SessionStatistics sessionStatistics, final long sessionId)
+    public void init(final SessionStatistics sessionStatistics, final long sessionId)
     {
         this.sessionStatistics = sessionStatistics;
         this.sessionId = sessionId;
