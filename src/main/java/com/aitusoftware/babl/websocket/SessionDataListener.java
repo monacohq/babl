@@ -17,7 +17,7 @@
  */
 package com.aitusoftware.babl.websocket;
 
-abstract class SessionDataListener
+public abstract class SessionDataListener
 {
     abstract void sendDataAvailable();
 

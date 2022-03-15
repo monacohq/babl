@@ -17,7 +17,7 @@
  */
 package com.aitusoftware.babl.websocket;
 
-final class FilteringSessionDataListener extends SessionDataListener
+final public class FilteringSessionDataListener extends SessionDataListener
 {
     private final TrackingSessionDataListener delegate;
     private long sessionId;
@@ -25,13 +25,13 @@ final class FilteringSessionDataListener extends SessionDataListener
     private boolean notifiedSendData;
     private boolean notifiedClosed;
 
-    FilteringSessionDataListener(final TrackingSessionDataListener delegate)
+    public FilteringSessionDataListener(final TrackingSessionDataListener delegate)
     {
         this.delegate = delegate;
     }
 
     @Override
-    void init(final long sessionId)
+    public void init(final long sessionId)
     {
         this.sessionId = sessionId;
         notifiedClosed = false;
@@ -40,7 +40,7 @@ final class FilteringSessionDataListener extends SessionDataListener
     }
 
     @Override
-    void sendDataAvailable()
+    public void sendDataAvailable()
     {
         if (!notifiedSendData)
         {
@@ -50,7 +50,7 @@ final class FilteringSessionDataListener extends SessionDataListener
     }
 
     @Override
-    void sendDataProcessed()
+    public void sendDataProcessed()
     {
         if (notifiedSendData)
         {
@@ -60,7 +60,7 @@ final class FilteringSessionDataListener extends SessionDataListener
     }
 
     @Override
-    void receiveDataAvailable()
+    public void receiveDataAvailable()
     {
         if (!notifiedReceiveData)
         {
@@ -70,7 +70,7 @@ final class FilteringSessionDataListener extends SessionDataListener
     }
 
     @Override
-    void receiveDataProcessed()
+    public void receiveDataProcessed()
     {
         if (notifiedReceiveData)
         {
@@ -80,7 +80,7 @@ final class FilteringSessionDataListener extends SessionDataListener
     }
 
     @Override
-    void sessionClosed()
+    public void sessionClosed()
     {
         if (!notifiedClosed)
         {
