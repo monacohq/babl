@@ -1,1 +1,1 @@
-0.11.2.1-cdc-support-sec-websocket-protocol_npefix
+0.11.2.1-trading-support-expose-frame_decoder_encoder

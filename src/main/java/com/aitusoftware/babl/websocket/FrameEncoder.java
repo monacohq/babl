@@ -36,7 +36,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
-final class FrameEncoder
+final public class FrameEncoder
 {
     private final int frameHeaderLength;
     private final int maxFramePayloadSize;
@@ -53,7 +53,7 @@ final class FrameEncoder
     private long sessionId;
     private ByteBuffer sendBuffer;
 
-    FrameEncoder(
+    public FrameEncoder(
         final BufferPool bufferPool,
         final SessionDataListener sessionDataListener,
         final SessionConfig sessionConfig,
@@ -85,7 +85,7 @@ final class FrameEncoder
         this.maskBitmask = (byte)(shouldMask ? 0b1000_0000 : 0b0000_0000);
     }
 
-    FrameEncoder(
+    public FrameEncoder(
         final BufferPool bufferPool,
         final SessionDataListener sessionDataListener,
         final SessionConfig sessionConfig,
@@ -94,35 +94,35 @@ final class FrameEncoder
         this(bufferPool, sessionDataListener, sessionConfig, false, sessionContainerStatistics);
     }
 
-    void reset()
+    public void reset()
     {
         bufferPool.release(sendBuffer);
     }
 
-    void init(final SessionStatistics sessionStatistics, final long sessionId)
+    public void init(final SessionStatistics sessionStatistics, final long sessionId)
     {
         this.sessionStatistics = sessionStatistics;
         this.sessionId = sessionId;
         sendBuffer = bufferPool.acquire(sessionConfig.sendBufferSize());
     }
 
-    int encodePong(final DirectBuffer pingData, final int offset, final int length)
+    public int encodePong(final DirectBuffer pingData, final int offset, final int length)
     {
         return encodeData(pingData, offset, length, Constants.OPCODE_PONG);
     }
 
-    int encodePing(final DirectBuffer payload, final int offset, final int length)
+    public int encodePing(final DirectBuffer payload, final int offset, final int length)
     {
         return encodeData(payload, offset, length, Constants.OPCODE_PING);
     }
 
-    int encodeClose(final short closeReason)
+    public int encodeClose(final short closeReason)
     {
         closeReasonBuffer.putShort(0, closeReason, Constants.NETWORK_BYTE_ORDER);
         return encodeData(closeReasonBuffer, 0, BitUtil.SIZE_OF_SHORT, Constants.OPCODE_CLOSE);
     }
 
-    int encodeMessage(final ContentType contentType, final DirectBuffer src, final int offset, final int length)
+    public int encodeMessage(final ContentType contentType, final DirectBuffer src, final int offset, final int length)
     {
         final int initialFrameOpcode = contentType.opCode();
         return encodeData(src, offset, length, initialFrameOpcode);
@@ -192,7 +192,7 @@ final class FrameEncoder
         return SendResult.OK;
     }
 
-    int doSendWork(final WritableByteChannel channel) throws IOException
+    public int doSendWork(final WritableByteChannel channel) throws IOException
     {
         if (sendBuffer.position() != 0)
         {
@@ -228,7 +228,7 @@ final class FrameEncoder
         return 0;
     }
 
-    ByteBuffer sendBuffer()
+    public ByteBuffer sendBuffer()
     {
         return sendBuffer;
     }
