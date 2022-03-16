@@ -43,51 +43,49 @@ import org.agrona.concurrent.SleepingMillisIdleStrategy;
 /**
  * Configuration for the web socket session container.
  */
-public final class SessionContainerConfig
-{
+public final class SessionContainerConfig {
     private final PerformanceConfig performanceConfig;
     private boolean pollModeEnabled = ConfigUtil.mapBoolean(
-        Constants.POLL_MODE_ENABLED_PROPERTY, Constants.POLL_MODE_ENABLED_DEFAULT);
+            Constants.POLL_MODE_ENABLED_PROPERTY, Constants.POLL_MODE_ENABLED_DEFAULT);
     private int pollModeSessionLimit = Integer.getInteger(
-        Constants.POLL_MODE_SESSION_LIMIT_PROPERTY, Constants.POLL_MODE_SESSION_LIMIT_DEFAULT);
+            Constants.POLL_MODE_SESSION_LIMIT_PROPERTY, Constants.POLL_MODE_SESSION_LIMIT_DEFAULT);
     private int listenPort = Integer.getInteger(
-        Constants.LISTEN_PORT_PROPERTY, Constants.LISTEN_PORT_DEFAULT);
+            Constants.LISTEN_PORT_PROPERTY, Constants.LISTEN_PORT_DEFAULT);
     private int connectionBacklog = Integer.getInteger(
-        Constants.CONNECTION_BACKLOG_PROPERTY, Constants.CONNECTION_BACKLOG_DEFAULT);
+            Constants.CONNECTION_BACKLOG_PROPERTY, Constants.CONNECTION_BACKLOG_DEFAULT);
     private String bindAddress = System.getProperty(Constants.BIND_ADDRESS_PROPERTY, Constants.BIND_ADDRESS_DEFAULT);
 
     private Supplier<IdleStrategy> serverIdleStrategySupplier;
     private Supplier<IdleStrategy> connectorIdleStrategySupplier =
-        () -> new SleepingMillisIdleStrategy(1L);
+            () -> new SleepingMillisIdleStrategy(1L);
 
     private ThreadFactory threadFactory = Thread::new;
     private BufferPoolPreAllocator bufferPoolPreAllocator = new NoOpBufferPoolPreAllocator();
     private String serverDirectory = System.getProperty(
-        Constants.SERVER_DIRECTORY_PROPERTY, Constants.SERVER_DIRECTORY_DEFAULT);
+            Constants.SERVER_DIRECTORY_PROPERTY, Constants.SERVER_DIRECTORY_DEFAULT);
     private int sessionMonitoringFileEntryCount = Integer.getInteger(
-        Constants.SESSION_MONITORING_FILE_ENTRY_COUNT_PROPERTY, Constants.SESSION_MONITORING_FILE_ENTRY_COUNT_DEFAULT);
+            Constants.SESSION_MONITORING_FILE_ENTRY_COUNT_PROPERTY, Constants.SESSION_MONITORING_FILE_ENTRY_COUNT_DEFAULT);
     private DeploymentMode deploymentMode = ConfigUtil.mapEnum(
-        DeploymentMode::valueOf, Constants.DEPLOYMENT_MODE_PROPERTY, Constants.DEPLOYMENT_MODE_DEFAULT);
+            DeploymentMode::valueOf, Constants.DEPLOYMENT_MODE_PROPERTY, Constants.DEPLOYMENT_MODE_DEFAULT);
     private int sessionContainerInstanceCount = Integer.getInteger(
-        Constants.SESSION_CONTAINER_INSTANCE_COUNT_PROPERTY, Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT);
+            Constants.SESSION_CONTAINER_INSTANCE_COUNT_PROPERTY, Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT);
     private int sessionPollLimit = Integer.getInteger(
-        Constants.SESSION_POLL_LIMIT_PROPERTY, Constants.SESSION_POLL_LIMIT_DEFAULT);
+            Constants.SESSION_POLL_LIMIT_PROPERTY, Constants.SESSION_POLL_LIMIT_DEFAULT);
     private ConnectionValidator connectionValidator = ConfigUtil.mapInstance(ConnectionValidator.class,
-        Constants.CONNECTION_VALIDATOR_PROPERTY, new AlwaysValidConnectionValidator());
+            Constants.CONNECTION_VALIDATOR_PROPERTY, new AlwaysValidConnectionValidator());
     private long validationTimeoutNanos = SystemUtil.getDurationInNanos(
-        SessionContainerConfig.Constants.VALIDATION_TIMEOUT_PROPERTY,
-        SessionContainerConfig.Constants.VALIDATION_TIMEOUT_DEFAULT);
+            SessionContainerConfig.Constants.VALIDATION_TIMEOUT_PROPERTY,
+            SessionContainerConfig.Constants.VALIDATION_TIMEOUT_DEFAULT);
     private boolean autoScale = ConfigUtil.mapBoolean(Constants.AUTO_SCALE_PROPERTY,
-        Constants.AUTO_SCALE_DEFAULT);
+            Constants.AUTO_SCALE_DEFAULT);
     private int activeSessionLimit = Integer.getInteger(Constants.ACTIVE_SESSION_LIMIT_PROPERTY,
-        Constants.ACTIVE_SESSION_LIMIT_DEFAULT);
+            Constants.ACTIVE_SESSION_LIMIT_DEFAULT);
     private BiFunction<Path, IdleStrategy, IdleStrategy> serverIdleStrategyFactory;
     private ConnectionRouter connectionRouter;
     private IntFunction<MessageTransformer> messageTransformerFactory;
     private int sessionContainerId;
 
-    SessionContainerConfig(final PerformanceConfig performanceConfig)
-    {
+    SessionContainerConfig(final PerformanceConfig performanceConfig) {
         this.performanceConfig = performanceConfig;
     }
 
@@ -95,64 +93,50 @@ public final class SessionContainerConfig
      * Validates configuration and creates the server's mark file.
      */
     @SuppressWarnings("unchecked")
-    public void conclude()
-    {
-        if (performanceConfig.performanceMode() == PerformanceMode.DEVELOPMENT)
-        {
+    public void conclude() {
+        if (performanceConfig.performanceMode() == PerformanceMode.DEVELOPMENT) {
             Logger.log(Category.CONFIG, "Overriding SessionContainer settings due to performance mode %s",
-                performanceConfig.performanceMode().name());
+                    performanceConfig.performanceMode().name());
             deploymentMode = DeploymentMode.DIRECT;
             sessionContainerInstanceCount = Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT;
             autoScale = false;
             connectorIdleStrategySupplier =
-                () -> new SleepingMillisIdleStrategy(100L);
+                    () -> new SleepingMillisIdleStrategy(100L);
         }
 
         if (deploymentMode == DeploymentMode.DIRECT &&
-            sessionContainerInstanceCount != Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT)
-        {
+                sessionContainerInstanceCount != Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT) {
             throw new IllegalStateException(
-                String.format("Multiple server instances are not supported in %s deployment mode.", deploymentMode));
+                    String.format("Multiple server instances are not supported in %s deployment mode.", deploymentMode));
         }
         if (sessionContainerInstanceCount != Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT &&
-            autoScale)
-        {
+                autoScale) {
             throw new IllegalStateException("Cannot use auto-scaling and specify server instance count");
         }
-        if (autoScale)
-        {
+        if (autoScale) {
             sessionContainerInstanceCount =
-                SessionContainerInstanceCountCalculator.calculateSessionContainerCount(this);
+                    SessionContainerInstanceCountCalculator.calculateSessionContainerCount(this);
         }
-        if (serverIdleStrategySupplier == null)
-        {
+        if (serverIdleStrategySupplier == null) {
             serverIdleStrategySupplier =
-                () -> ConfigUtil.mapIdleStrategy(Constants.IDLE_STRATEGY_PROPERTY, performanceConfig.performanceMode());
+                    () -> ConfigUtil.mapIdleStrategy(Constants.IDLE_STRATEGY_PROPERTY, performanceConfig.performanceMode());
         }
-        if (System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY) != null)
-        {
+        if (System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY) != null) {
             serverIdleStrategyFactory =
-                (BiFunction<Path, IdleStrategy, IdleStrategy>)ConfigUtil.instantiate(BiFunction.class)
-                    .apply(System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY));
-        }
-        else
-        {
+                    (BiFunction<Path, IdleStrategy, IdleStrategy>) ConfigUtil.instantiate(BiFunction.class)
+                            .apply(System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY));
+        } else {
             serverIdleStrategyFactory = (path, configured) -> configured;
         }
-        if (System.getProperty(Constants.CONNECTION_ROUTER_FACTORY_PROPERTY) != null)
-        {
+        if (System.getProperty(Constants.CONNECTION_ROUTER_FACTORY_PROPERTY) != null) {
             final Function<SessionContainerConfig, ConnectionRouter> connectionRouterFactory =
-                (Function<SessionContainerConfig, ConnectionRouter>)ConfigUtil.instantiate(Function.class)
-                .apply(System.getProperty(Constants.CONNECTION_ROUTER_FACTORY_PROPERTY));
-            if (connectionRouter == null)
-            {
+                    (Function<SessionContainerConfig, ConnectionRouter>) ConfigUtil.instantiate(Function.class)
+                            .apply(System.getProperty(Constants.CONNECTION_ROUTER_FACTORY_PROPERTY));
+            if (connectionRouter == null) {
                 connectionRouter = connectionRouterFactory.apply(this);
             }
-        }
-        else
-        {
-            if (connectionRouter == null)
-            {
+        } else {
+            if (connectionRouter == null) {
                 connectionRouter = new RoundRobinConnectionRouter(sessionContainerInstanceCount);
             }
         }
@@ -160,30 +144,30 @@ public final class SessionContainerConfig
 
     /**
      * Returns any user-configured pre-allocator for byte buffers.
+     *
      * @return the pre-allocator
      */
-    public BufferPoolPreAllocator bufferPoolPreAllocator()
-    {
+    public BufferPoolPreAllocator bufferPoolPreAllocator() {
         return bufferPoolPreAllocator;
     }
 
     /**
      * Sets the pre-allocator used for byte buffers on start-up.
+     *
      * @param bufferPoolPreAllocator the pre-allocator
      * @return this for a fluent API
      */
-    public SessionContainerConfig bufferPoolPreAllocator(final BufferPoolPreAllocator bufferPoolPreAllocator)
-    {
+    public SessionContainerConfig bufferPoolPreAllocator(final BufferPoolPreAllocator bufferPoolPreAllocator) {
         this.bufferPoolPreAllocator = bufferPoolPreAllocator;
         return this;
     }
 
     /**
      * Indicates whether poll mode is enabled when the session count is below the configured limit.
+     *
      * @return whether poll mode is enabled
      */
-    public boolean pollModeEnabled()
-    {
+    public boolean pollModeEnabled() {
         return pollModeEnabled;
     }
 
@@ -193,78 +177,77 @@ public final class SessionContainerConfig
      * @param pollModeEnabled whether poll mode is enabled
      * @return this for a fluent API
      */
-    public SessionContainerConfig pollModeEnabled(final boolean pollModeEnabled)
-    {
+    public SessionContainerConfig pollModeEnabled(final boolean pollModeEnabled) {
         this.pollModeEnabled = pollModeEnabled;
         return this;
     }
 
     /**
      * Returns the number of sessions that will be processed using a busy-poll, rather than using {@code epoll}.
+     *
      * @return the session count limit
      */
-    public int pollModeSessionLimit()
-    {
+    public int pollModeSessionLimit() {
         return pollModeSessionLimit;
     }
 
     /**
      * Sets the number of sessions that will be processed using a busy-poll, rather than using {@code epoll}.
+     *
      * @param pollModeSessionLimit the session count limit
      * @return this for a fluent API
      */
-    public SessionContainerConfig pollModeSessionLimit(final int pollModeSessionLimit)
-    {
+    public SessionContainerConfig pollModeSessionLimit(final int pollModeSessionLimit) {
         this.pollModeSessionLimit = pollModeSessionLimit;
         return this;
     }
 
     /**
      * Returns the port that the server will listen on for incoming connections.
+     *
      * @return the port number
      */
-    public int listenPort()
-    {
+    public int listenPort() {
         return listenPort;
     }
 
     /**
      * Sets the port that the server will listen on.
+     *
      * @param listenPort the port number
      * @return this for a fluent API
      */
-    public SessionContainerConfig listenPort(final int listenPort)
-    {
+    public SessionContainerConfig listenPort(final int listenPort) {
         this.listenPort = listenPort;
         return this;
     }
 
     /**
      * Returns the address that the server will listen on.
+     *
      * @return the address
      */
-    public String bindAddress()
-    {
+    public String bindAddress() {
         return bindAddress;
     }
 
     /**
      * Sets the address that the server will listen on.
+     *
      * @param bindAddress the address
      * @return this for a fluent API
      */
-    public SessionContainerConfig bindAddress(final String bindAddress)
-    {
+    public SessionContainerConfig bindAddress(final String bindAddress) {
         this.bindAddress = bindAddress;
         return this;
     }
 
     /**
      * Returns the connection backlog that will be maintained by the operating system.
+     *
      * @return the connection backlog
      */
-    public int connectionBacklog()
-    {
+    public int connectionBacklog() {
         return connectionBacklog;
     }
 
@@ -274,28 +257,27 @@ public final class SessionContainerConfig
      * @param connectionBacklog the connection backlog
      * @return this for a fluent API
      */
-    public SessionContainerConfig connectionBacklog(final int connectionBacklog)
-    {
+    public SessionContainerConfig connectionBacklog(final int connectionBacklog) {
         this.connectionBacklog = connectionBacklog;
         return this;
     }
 
     /**
      * Returns the {@code Supplier} of the {@code IdleStrategy} used in the server event-loop.
+     *
      * @return the idle-strategy supplier
      */
-    public Supplier<IdleStrategy> serverIdleStrategySupplier()
-    {
+    public Supplier<IdleStrategy> serverIdleStrategySupplier() {
         return serverIdleStrategySupplier;
     }
 
     /**
      * Sets the {@code Supplier} of the {@code IdleStrategy} used in the server event-loop.
+     *
      * @param serverIdleStrategySupplier the idle-strategy supplier
      * @return this for a fluent API
      */
-    public SessionContainerConfig serverIdleStrategySupplier(final Supplier<IdleStrategy> serverIdleStrategySupplier)
-    {
+    public SessionContainerConfig serverIdleStrategySupplier(final Supplier<IdleStrategy> serverIdleStrategySupplier) {
         this.serverIdleStrategySupplier = serverIdleStrategySupplier;
         return this;
     }
@@ -306,101 +288,100 @@ public final class SessionContainerConfig
      * @param serverId session container instance id
      * @return the idle strategy
      */
-    public IdleStrategy serverIdleStrategy(final int serverId)
-    {
+    public IdleStrategy serverIdleStrategy(final int serverId) {
         return serverIdleStrategyFactory.apply(Paths.get(serverDirectory(serverId)), serverIdleStrategySupplier.get());
     }
 
     /**
      * Returns the {@code Supplier} of the {@code IdleStrategy} used in the connector event-loop.
+     *
      * @return the idle-strategy supplier
      */
-    public Supplier<IdleStrategy> connectorIdleStrategySupplier()
-    {
+    public Supplier<IdleStrategy> connectorIdleStrategySupplier() {
         return connectorIdleStrategySupplier;
     }
 
     /**
      * Sets the {@code Supplier} of the {@code IdleStrategy} used in the connector event-loop.
+     *
      * @param connectorIdleStrategySupplier the idle-strategy supplier
      * @return this for a fluent API
      */
     public SessionContainerConfig connectorIdleStrategySupplier(
-        final Supplier<IdleStrategy> connectorIdleStrategySupplier)
-    {
+            final Supplier<IdleStrategy> connectorIdleStrategySupplier) {
         this.connectorIdleStrategySupplier = connectorIdleStrategySupplier;
         return this;
     }
 
     /**
      * Returns the {@code ThreadFactory} used for creating event-loop threads.
+     *
      * @return the thread-factory
      */
-    public ThreadFactory threadFactory()
-    {
+    public ThreadFactory threadFactory() {
         return threadFactory;
     }
 
     /**
      * Sets the {@code ThreadFactory} used for creating event-loop threads.
+     *
      * @param threadFactory the thread-factory
      * @return this for a fluent API
      */
-    public SessionContainerConfig threadFactory(final ThreadFactory threadFactory)
-    {
+    public SessionContainerConfig threadFactory(final ThreadFactory threadFactory) {
         this.threadFactory = threadFactory;
         return this;
     }
 
     /**
      * Returns the directory used by the server for data.
+     *
      * @param serverId the ID of the server
      * @return the server directory
      */
-    public String serverDirectory(final int serverId)
-    {
+    public String serverDirectory(final int serverId) {
         return sessionContainerInstanceCount == Constants.SESSION_CONTAINER_INSTANCE_COUNT_DEFAULT ?
-            Paths.get(serverDirectory).toString() :
-            Paths.get(serverDirectory).resolve(Integer.toString(serverId)).toString();
+                Paths.get(serverDirectory).toString() :
+                Paths.get(serverDirectory).resolve(Integer.toString(serverId)).toString();
     }
 
     /**
      * Sets the directory used by the server for data.
+     *
      * @param serverDirectory the server directory
      * @return this for a fluent API
      */
-    public SessionContainerConfig serverDirectory(final String serverDirectory)
-    {
+    public SessionContainerConfig serverDirectory(final String serverDirectory) {
         this.serverDirectory = serverDirectory;
         return this;
     }
 
     /**
      * Returns the total number of sessions monitoring in a single monitoring file.
+     *
      * @return the number of sessions per monitoring file
      */
-    public int sessionMonitoringFileEntryCount()
-    {
+    public int sessionMonitoringFileEntryCount() {
         return sessionMonitoringFileEntryCount;
     }
 
     /**
      * Sets the total number of sessions monitoring in a single monitoring file.
+     *
      * @param sessionMonitoringFileEntryCount the number of sessions
      * @return this for a fluent API
      */
-    public SessionContainerConfig sessionMonitoringFileEntryCount(final int sessionMonitoringFileEntryCount)
-    {
+    public SessionContainerConfig sessionMonitoringFileEntryCount(final int sessionMonitoringFileEntryCount) {
         this.sessionMonitoringFileEntryCount = sessionMonitoringFileEntryCount;
         return this;
     }
 
     /**
      * Returns the deployment mode of the server.
+     *
      * @return the deployment mode
      */
-    public DeploymentMode deploymentMode()
-    {
+    public DeploymentMode deploymentMode() {
         return deploymentMode;
     }
 
@@ -410,18 +391,17 @@ public final class SessionContainerConfig
      * @param deploymentMode the deployment mode
      * @return this for a fluent API
      */
-    public SessionContainerConfig deploymentMode(final DeploymentMode deploymentMode)
-    {
+    public SessionContainerConfig deploymentMode(final DeploymentMode deploymentMode) {
         this.deploymentMode = deploymentMode;
         return this;
     }
 
     /**
      * Returns the session container instance count.
+     *
      * @return the session container instance count
      */
-    public int sessionContainerInstanceCount()
-    {
+    public int sessionContainerInstanceCount() {
         return sessionContainerInstanceCount;
     }
 
@@ -431,18 +411,17 @@ public final class SessionContainerConfig
      * @param sessionContainerInstanceCount the server instance count
      * @return this for a fluent API
      */
-    public SessionContainerConfig sessionContainerInstanceCount(final int sessionContainerInstanceCount)
-    {
+    public SessionContainerConfig sessionContainerInstanceCount(final int sessionContainerInstanceCount) {
         this.sessionContainerInstanceCount = sessionContainerInstanceCount;
         return this;
     }
 
     /**
      * Returns the session poll limit.
+     *
      * @return the session poll limit
      */
-    public int sessionPollLimit()
-    {
+    public int sessionPollLimit() {
         return sessionPollLimit;
     }
 
@@ -452,128 +431,127 @@ public final class SessionContainerConfig
      * @param sessionPollLimit the session poll limit
      * @return this for a fluent API
      */
-    public SessionContainerConfig sessionPollLimit(final int sessionPollLimit)
-    {
+    public SessionContainerConfig sessionPollLimit(final int sessionPollLimit) {
         this.sessionPollLimit = sessionPollLimit;
         return this;
     }
 
     /**
      * Returns the connection validator.
+     *
      * @return the connection validator
      */
-    public ConnectionValidator connectionValidator()
-    {
+    public ConnectionValidator connectionValidator() {
         return connectionValidator;
     }
 
     /**
      * Sets the connection validator.
+     *
      * @param connectionValidator the connection validator
      * @return this for a fluent API
      */
-    public SessionContainerConfig connectionValidator(final ConnectionValidator connectionValidator)
-    {
+    public SessionContainerConfig connectionValidator(final ConnectionValidator connectionValidator) {
         this.connectionValidator = connectionValidator;
         return this;
     }
 
     /**
      * Returns the validation timeout in nanoseconds.
+     *
      * @return the validation timeout in nanoseconds
      */
-    public long validationTimeoutNanos()
-    {
+    public long validationTimeoutNanos() {
         return validationTimeoutNanos;
     }
 
     /**
      * Sets the validation timeout in nanoseconds.
+     *
      * @param validationTimeoutNanos the validation timeout in nanoseconds
      * @return this for a fluent API
      */
-    public SessionContainerConfig validationTimeoutNanos(final long validationTimeoutNanos)
-    {
+    public SessionContainerConfig validationTimeoutNanos(final long validationTimeoutNanos) {
         this.validationTimeoutNanos = validationTimeoutNanos;
         return this;
     }
 
     /**
      * Returns the auto-scale value.
+     *
      * @return the auto-scale value
      */
-    public boolean autoScale()
-    {
+    public boolean autoScale() {
         return autoScale;
     }
 
     /**
      * Sets the auto-scale value
+     *
      * @param autoScale the auto-scale value
      * @return this for a fluent API
      */
-    public SessionContainerConfig autoScale(final boolean autoScale)
-    {
+    public SessionContainerConfig autoScale(final boolean autoScale) {
         this.autoScale = autoScale;
         return this;
     }
 
     /**
      * Returns the active session limit.
+     *
      * @return the active session limit
      */
-    public int activeSessionLimit()
-    {
+    public int activeSessionLimit() {
         return activeSessionLimit;
     }
 
     /**
      * Sets the active session limit
+     *
      * @param activeSessionLimit the active session limit
      * @return this for a fluent API
      */
-    public SessionContainerConfig activeSessionLimit(final int activeSessionLimit)
-    {
+    public SessionContainerConfig activeSessionLimit(final int activeSessionLimit) {
         this.activeSessionLimit = activeSessionLimit;
         return this;
     }
 
     /**
      * Returns the connection router.
+     *
      * @return the connection router
      */
-    public ConnectionRouter connectionRouter()
-    {
+    public ConnectionRouter connectionRouter() {
         return connectionRouter;
     }
 
     /**
      * Sets the connection router.
+     *
      * @param connectionRouter the connection router
      * @return this for a fluent API
      */
-    public SessionContainerConfig connectionRouter(final ConnectionRouter connectionRouter)
-    {
+    public SessionContainerConfig connectionRouter(final ConnectionRouter connectionRouter) {
         this.connectionRouter = connectionRouter;
         return this;
     }
 
     /**
      * Returns the message transformer factory.
+     *
      * @return the message transformer factory
      */
-    public IntFunction<MessageTransformer> messageTransformerFactory()
-    {
+    public IntFunction<MessageTransformer> messageTransformerFactory() {
         return messageTransformerFactory;
     }
 
     /**
      * Sets the message transformer factory.
+     *
      * @param messageTransformer the message transformer factory
      * @return this for a fluent API
      */
-    public SessionContainerConfig messageTransformerFactory(final IntFunction<MessageTransformer> messageTransformer)
-    {
+    public SessionContainerConfig messageTransformerFactory(final IntFunction<MessageTransformer> messageTransformer) {
         messageTransformerFactory = messageTransformer;
         return this;
     }
@@ -590,8 +568,7 @@ public final class SessionContainerConfig
     /**
      * Constants used in configuration.
      */
-    public static final class Constants
-    {
+    public static final class Constants {
         /**
          * System property used to set the poll-mode enabled property
          */
@@ -651,13 +628,13 @@ public final class SessionContainerConfig
          * Default value for the server directory
          */
         public static final String SERVER_DIRECTORY_DEFAULT = Paths.get(System.getProperty("java.io.tmpdir"))
-            .resolve("babl-server").toString();
+                .resolve("babl-server").toString();
 
         /**
          * System property used to configure the session monitoring file entry count
          */
         public static final String SESSION_MONITORING_FILE_ENTRY_COUNT_PROPERTY =
-            "babl.server.session.monitoring.entry.count";
+                "babl.server.session.monitoring.entry.count";
         /**
          * Default value for the session monitoring file entry count
          */
@@ -754,7 +731,7 @@ public final class SessionContainerConfig
         public static final int ACTIVE_SESSION_LIMIT_DEFAULT = 10_000;
 
         /**
-        /**
+         * /**
          * System property used to configure session-container-id
          */
         public static final String SESSION_CONTAINER_ID = "babl.server.id";

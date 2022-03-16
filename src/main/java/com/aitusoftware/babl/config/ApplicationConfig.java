@@ -36,149 +36,149 @@ import org.agrona.concurrent.IdleStrategy;
  * Will attempt to instantiate the class specified by {@code APPLICATION_CLASS_NAME_PROPERTY}.
  */
 public final class ApplicationConfig {
-  private final PerformanceConfig performanceConfig;
-  private Application application;
+    private final PerformanceConfig performanceConfig;
+    private Application application;
 
-  private String applicationClassName = System.getProperty(Constants.APPLICATION_CLASS_NAME_PROPERTY);
-  private BiFunction<Path, IdleStrategy, IdleStrategy> applicationIdleStrategyFactory;
-  private Supplier<IdleStrategy> idleStrategySupplier;
-  private Agent additionalWork;
+    private String applicationClassName = System.getProperty(Constants.APPLICATION_CLASS_NAME_PROPERTY);
+    private BiFunction<Path, IdleStrategy, IdleStrategy> applicationIdleStrategyFactory;
+    private Supplier<IdleStrategy> idleStrategySupplier;
+    private Agent additionalWork;
 
-  ApplicationConfig(final PerformanceConfig performanceConfig) {
-    this.performanceConfig = performanceConfig;
-  }
-
-  /**
-   * Sets the application.
-   *
-   * @param application the application
-   * @return this for a fluent API
-   */
-  public ApplicationConfig application(final Application application) {
-    this.application = application;
-    return this;
-  }
-
-  /**
-   * Returns the application.
-   *
-   * @return the application
-   */
-  public Application application() {
-    return application;
-  }
-
-  /**
-   * Sets the application class name.
-   *
-   * @param applicationClassName the class name
-   * @return this for a fluent API
-   */
-  public ApplicationConfig applicationClassName(final String applicationClassName) {
-    this.applicationClassName = applicationClassName;
-    return this;
-  }
-
-  /**
-   * Sets the idle strategy supplier.
-   *
-   * @param applicationIdleStrategySupplier the idle strategy supplier
-   * @return this for a fluent API
-   */
-  public ApplicationConfig applicationIdleStrategySupplier(
-      final Supplier<IdleStrategy> applicationIdleStrategySupplier) {
-    this.idleStrategySupplier = applicationIdleStrategySupplier;
-    return this;
-  }
-
-  /**
-   * Gets the idle strategy for the application container.
-   *
-   * @param directory the data directory
-   * @return the idle strategy
-   */
-  public IdleStrategy applicationIdleStrategy(final String directory) {
-    return applicationIdleStrategyFactory.apply(Paths.get(directory), idleStrategySupplier.get());
-  }
-
-  /**
-   * Set additional work to be done on the application thread.
-   *
-   * @param additionalWork additional work
-   * @return this for a fluent API
-   */
-  public ApplicationConfig additionalWork(final Agent additionalWork) {
-    this.additionalWork = additionalWork;
-    return this;
-  }
-
-  /**
-   * Gets the additional work to be done on the application thread.
-   *
-   * @return additional work
-   */
-  public Agent additionalWork() {
-    return additionalWork;
-  }
-
-  @SuppressWarnings("unchecked")
-  void conclude() {
-    if (applicationClassName != null) {
-      if (application != null) {
-        throw new IllegalStateException("Specify either applicationClassName or application");
-      }
-      try {
-        application = (Application) Class.forName(applicationClassName).getConstructor().newInstance();
-      } catch (final ClassNotFoundException |
-          IllegalAccessException |
-          InstantiationException |
-          NoSuchMethodException |
-          InvocationTargetException e) {
-        throw new RuntimeException("Unable to instantiate class " + applicationClassName, e);
-      }
+    ApplicationConfig(final PerformanceConfig performanceConfig) {
+        this.performanceConfig = performanceConfig;
     }
 
-    Objects.requireNonNull(application, "application must be set");
-
-    if (idleStrategySupplier == null) {
-      idleStrategySupplier =
-          () -> ConfigUtil.mapIdleStrategy(Constants.IDLE_STRATEGY_PROPERTY, performanceConfig.performanceMode());
+    /**
+     * Sets the application.
+     *
+     * @param application the application
+     * @return this for a fluent API
+     */
+    public ApplicationConfig application(final Application application) {
+        this.application = application;
+        return this;
     }
-    if (System.getProperty(ApplicationConfig.Constants.IDLE_STRATEGY_FACTORY_PROPERTY) != null) {
-      applicationIdleStrategyFactory =
-          (BiFunction<Path, IdleStrategy, IdleStrategy>) ConfigUtil.instantiate(BiFunction.class)
-              .apply(System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY));
-    } else {
-      applicationIdleStrategyFactory = (path, configured) -> configured;
+
+    /**
+     * Returns the application.
+     *
+     * @return the application
+     */
+    public Application application() {
+        return application;
     }
-  }
-
-  /**
-   * Constants used in configuration.
-   */
-  public static final class Constants {
-    /**
-     * The system property used to set the application class name
-     */
-    public static final String APPLICATION_CLASS_NAME_PROPERTY = "babl.application.class.name";
 
     /**
-     * System property used to configure a factory for the application idle strategy
+     * Sets the application class name.
+     *
+     * @param applicationClassName the class name
+     * @return this for a fluent API
      */
-    public static final String IDLE_STRATEGY_FACTORY_PROPERTY = "babl.application.idle.strategy.factory";
+    public ApplicationConfig applicationClassName(final String applicationClassName) {
+        this.applicationClassName = applicationClassName;
+        return this;
+    }
 
     /**
-     * System property used to configure the application event-loop idle strategy
+     * Sets the idle strategy supplier.
+     *
+     * @param applicationIdleStrategySupplier the idle strategy supplier
+     * @return this for a fluent API
      */
-    public static final String IDLE_STRATEGY_PROPERTY = "babl.application.idle.strategy";
+    public ApplicationConfig applicationIdleStrategySupplier(
+            final Supplier<IdleStrategy> applicationIdleStrategySupplier) {
+        this.idleStrategySupplier = applicationIdleStrategySupplier;
+        return this;
+    }
 
     /**
-     * Default value for application idle strategy
+     * Gets the idle strategy for the application container.
+     *
+     * @param directory the data directory
+     * @return the idle strategy
      */
-    public static final String IDLE_STRATEGY_DEFAULT = "BUSY_SPIN";
+    public IdleStrategy applicationIdleStrategy(final String directory) {
+        return applicationIdleStrategyFactory.apply(Paths.get(directory), idleStrategySupplier.get());
+    }
 
-    public static final String APP_DIRECTORY_PROPERTY = "babl.application.directory";
+    /**
+     * Set additional work to be done on the application thread.
+     *
+     * @param additionalWork additional work
+     * @return this for a fluent API
+     */
+    public ApplicationConfig additionalWork(final Agent additionalWork) {
+        this.additionalWork = additionalWork;
+        return this;
+    }
 
-    public static final String APP_DIRECTORY_DEFAULT = Paths.get(System.getProperty("java.io.tmpdir")).resolve("babl-app").toString();
-  }
+    /**
+     * Gets the additional work to be done on the application thread.
+     *
+     * @return additional work
+     */
+    public Agent additionalWork() {
+        return additionalWork;
+    }
+
+    @SuppressWarnings("unchecked")
+    void conclude() {
+        if (applicationClassName != null) {
+            if (application != null) {
+                throw new IllegalStateException("Specify either applicationClassName or application");
+            }
+            try {
+                application = (Application) Class.forName(applicationClassName).getConstructor().newInstance();
+            } catch (final ClassNotFoundException |
+                    IllegalAccessException |
+                    InstantiationException |
+                    NoSuchMethodException |
+                    InvocationTargetException e) {
+                throw new RuntimeException("Unable to instantiate class " + applicationClassName, e);
+            }
+        }
+
+        Objects.requireNonNull(application, "application must be set");
+
+        if (idleStrategySupplier == null) {
+            idleStrategySupplier =
+                    () -> ConfigUtil.mapIdleStrategy(Constants.IDLE_STRATEGY_PROPERTY, performanceConfig.performanceMode());
+        }
+        if (System.getProperty(ApplicationConfig.Constants.IDLE_STRATEGY_FACTORY_PROPERTY) != null) {
+            applicationIdleStrategyFactory =
+                    (BiFunction<Path, IdleStrategy, IdleStrategy>) ConfigUtil.instantiate(BiFunction.class)
+                            .apply(System.getProperty(Constants.IDLE_STRATEGY_FACTORY_PROPERTY));
+        } else {
+            applicationIdleStrategyFactory = (path, configured) -> configured;
+        }
+    }
+
+    /**
+     * Constants used in configuration.
+     */
+    public static final class Constants {
+        /**
+         * The system property used to set the application class name
+         */
+        public static final String APPLICATION_CLASS_NAME_PROPERTY = "babl.application.class.name";
+
+        /**
+         * System property used to configure a factory for the application idle strategy
+         */
+        public static final String IDLE_STRATEGY_FACTORY_PROPERTY = "babl.application.idle.strategy.factory";
+
+        /**
+         * System property used to configure the application event-loop idle strategy
+         */
+        public static final String IDLE_STRATEGY_PROPERTY = "babl.application.idle.strategy";
+
+        /**
+         * Default value for application idle strategy
+         */
+        public static final String IDLE_STRATEGY_DEFAULT = "BUSY_SPIN";
+
+        public static final String APP_DIRECTORY_PROPERTY = "babl.application.directory";
+
+        public static final String APP_DIRECTORY_DEFAULT = Paths.get(System.getProperty("java.io.tmpdir")).resolve("babl-app").toString();
+    }
 }
