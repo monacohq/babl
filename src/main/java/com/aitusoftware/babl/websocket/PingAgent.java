@@ -27,7 +27,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.EpochClock;
 import org.agrona.concurrent.UnsafeBuffer;
 
-final class PingAgent
+final public class PingAgent
 {
     static final int MAX_PING_PAYLOAD_LENGTH = 125;
 
@@ -47,7 +47,7 @@ final class PingAgent
     private boolean hasPong;
     private long sessionId;
 
-    PingAgent(
+    public PingAgent(
         final FrameEncoder frameEncoder,
         final EpochClock clock,
         final long pingIntervalMs,
@@ -58,7 +58,7 @@ final class PingAgent
             sessionDataListener, new NanoTimePingPayloadSupplier());
     }
 
-    PingAgent(
+    public PingAgent(
         final FrameEncoder frameEncoder,
         final EpochClock clock,
         final long pingIntervalMs,
@@ -74,7 +74,7 @@ final class PingAgent
         this.pingPayloadSupplier = pingPayloadSupplier;
     }
 
-    void reset()
+    public void reset()
     {
         sessionId = -1;
         awaitingPong = false;
@@ -82,13 +82,13 @@ final class PingAgent
         pongResponseDeadlineMs = 0;
     }
 
-    void init(final long sessionId)
+    public void init(final long sessionId)
     {
         this.sessionId = sessionId;
         nextPingTimestampMs = clock.time() + pingIntervalMs;
     }
 
-    int doWork()
+    public int doWork()
     {
         int workDone = 0;
         final long time = clock.time();
@@ -111,17 +111,17 @@ final class PingAgent
         return workDone;
     }
 
-    void messageReceived()
+    public void messageReceived()
     {
         nextPingTimestampMs = clock.time() + pingIntervalMs;
     }
 
-    boolean connectionIsAlive()
+    public boolean connectionIsAlive()
     {
         return !(awaitingPong && clock.time() > pongResponseDeadlineMs);
     }
 
-    void pongReceived(final DirectBuffer buffer, final int offset, final int length)
+    public void pongReceived(final DirectBuffer buffer, final int offset, final int length)
     {
         if (length >= BitUtil.SIZE_OF_LONG && buffer.getLong(offset) == lastPingPayload)
         {
@@ -130,7 +130,7 @@ final class PingAgent
         }
     }
 
-    void pingReceived(final DirectBuffer payloadBuffer, final int offset, final int length)
+    public void pingReceived(final DirectBuffer payloadBuffer, final int offset, final int length)
     {
         pongPayloadBuffer.putBytes(0, payloadBuffer, offset, length);
         pongPayloadLength = length;
@@ -165,7 +165,7 @@ final class PingAgent
         return pongSent;
     }
 
-    boolean pongRequired()
+    public boolean pongRequired()
     {
         return hasPong;
     }
