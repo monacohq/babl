@@ -49,7 +49,7 @@ jobs:
           name: Clean build and publish the project artifacts
           command: |
             ./gradlew :jfrogInfo > jfrogInfo.txt
-            [[ $CIRCLE_BRANCH == "develop" ]] || [[ $CIRCLE_BRANCH == release/* ]] || [[ $CIRCLE_BRANCH == "master" ]] && publish_opts="artifactoryPublish configArtifactory"
+            [[ $CIRCLE_BRANCH == "develop" ]] || [[ $CIRCLE_BRANCH == release/* ]] || [[ $CIRCLE_BRANCH == "master" ]] || [[ $CIRCLE_BRANCH == feature/* ]] && publish_opts="artifactoryPublish configArtifactory"
             ./gradlew clean build -x checkLicenseMain -x test -x checkstyleMain -x checkstyleJmh $publish_opts $grade_build_opts --info --refresh-dependencies
 
 
