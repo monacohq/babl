@@ -1,1 +1,1 @@
-0.11.2.2-trading-support-expose-frame_decoder_encoder
+0.11.2.2-multi-jvm
