@@ -23,5 +23,7 @@ package com.aitusoftware.babl.config;
 public enum DeploymentMode
 {
     DIRECT,
-    DETACHED
+    DETACHED,
+    APP_ONLY,
+    SERVER_ONLY
 }

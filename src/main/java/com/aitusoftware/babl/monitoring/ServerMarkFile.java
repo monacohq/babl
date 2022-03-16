@@ -29,17 +29,24 @@ public final class ServerMarkFile extends MarkFile
 {
     public static final int DATA_OFFSET = BitUtil.SIZE_OF_INT + BitUtil.SIZE_OF_LONG;
     public static final int DATA_LENGTH = MappedSessionContainerStatistics.LENGTH;
-    public static final int ERROR_BUFFER_OFFSET = BitUtil.align(DATA_OFFSET + DATA_LENGTH,
-        BitUtil.CACHE_LINE_LENGTH);
+    public static final int ERROR_BUFFER_OFFSET = BitUtil.align(DATA_OFFSET + DATA_LENGTH, BitUtil.CACHE_LINE_LENGTH);
     public static final int ERROR_BUFFER_LENGTH = 65536;
     public static final String MARK_FILE_NAME = "babl-server.mark";
     private static final int TOTAL_LENGTH = ERROR_BUFFER_OFFSET + ERROR_BUFFER_LENGTH;
 
-    public ServerMarkFile(final Path directory)
-    {
-        super(directory.resolve(MARK_FILE_NAME).toFile(), false,
-            0, BitUtil.SIZE_OF_INT, TOTAL_LENGTH, 5_000L,
-            new SystemEpochClock(), v -> {}, System.out::println);
+    public ServerMarkFile(final Path directory) {
+        this(directory, false);
+    }
+
+    public ServerMarkFile(final Path directory, final boolean shouldPreExist) {
+        super(
+            directory.resolve(MARK_FILE_NAME).toFile(),
+            shouldPreExist,
+            0,
+            BitUtil.SIZE_OF_INT, TOTAL_LENGTH,
+            5_000L,
+            new SystemEpochClock(), v -> {},
+            System.out::println);
     }
 
     public AtomicBuffer errorBuffer()

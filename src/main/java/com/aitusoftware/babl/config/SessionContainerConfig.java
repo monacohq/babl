@@ -84,6 +84,7 @@ public final class SessionContainerConfig
     private BiFunction<Path, IdleStrategy, IdleStrategy> serverIdleStrategyFactory;
     private ConnectionRouter connectionRouter;
     private IntFunction<MessageTransformer> messageTransformerFactory;
+    private int sessionContainerId;
 
     SessionContainerConfig(final PerformanceConfig performanceConfig)
     {
@@ -400,7 +401,7 @@ public final class SessionContainerConfig
      */
     public DeploymentMode deploymentMode()
     {
-        return this.deploymentMode;
+        return deploymentMode;
     }
 
     /**
@@ -442,7 +443,7 @@ public final class SessionContainerConfig
      */
     public int sessionPollLimit()
     {
-        return this.sessionPollLimit;
+        return sessionPollLimit;
     }
 
     /**
@@ -573,7 +574,16 @@ public final class SessionContainerConfig
      */
     public SessionContainerConfig messageTransformerFactory(final IntFunction<MessageTransformer> messageTransformer)
     {
-        this.messageTransformerFactory = messageTransformer;
+        messageTransformerFactory = messageTransformer;
+        return this;
+    }
+
+    public int sessionContainerId() {
+        return sessionContainerId;
+    }
+
+    public SessionContainerConfig sessionContainerId(final int sessionContainerId) {
+        this.sessionContainerId = sessionContainerId;
         return this;
     }
 
@@ -742,5 +752,16 @@ public final class SessionContainerConfig
          * Default value for the active session limit
          */
         public static final int ACTIVE_SESSION_LIMIT_DEFAULT = 10_000;
+
+        /**
+        /**
+         * System property used to configure session-container-id
+         */
+        public static final String SESSION_CONTAINER_ID = "babl.server.id";
+
+        /**
+         * Default value for SESSION_CONTAINER_ID
+         */
+        public static final int SESSION_CONTAINER_ID_DEFAULT = 0;
     }
 }
