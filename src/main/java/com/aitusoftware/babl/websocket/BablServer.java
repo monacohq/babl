@@ -17,57 +17,42 @@
  */
 package com.aitusoftware.babl.websocket;
 
-import static io.aeron.CommonContext.IPC_CHANNEL;
-
-import com.aitusoftware.babl.user.ContentType;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.file.*;
-import java.util.*;
-
-import com.aitusoftware.babl.config.BablConfig;
-import com.aitusoftware.babl.config.BackPressurePolicy;
-import com.aitusoftware.babl.config.DeploymentMode;
-import com.aitusoftware.babl.config.PropertiesLoader;
-import com.aitusoftware.babl.config.ProxyConfig;
-import com.aitusoftware.babl.config.SessionContainerConfig;
+import com.aitusoftware.babl.config.*;
 import com.aitusoftware.babl.io.ConnectionPoller;
-import com.aitusoftware.babl.monitoring.MappedApplicationAdapterStatistics;
-import com.aitusoftware.babl.monitoring.MappedBroadcastStatistics;
-import com.aitusoftware.babl.monitoring.MappedConnectorStatistics;
-import com.aitusoftware.babl.monitoring.MappedFile;
-import com.aitusoftware.babl.monitoring.MappedSessionContainerAdapterStatistics;
-import com.aitusoftware.babl.monitoring.ServerMarkFile;
+import com.aitusoftware.babl.monitoring.*;
 import com.aitusoftware.babl.proxy.ApplicationAdapter;
 import com.aitusoftware.babl.proxy.ApplicationProxy;
 import com.aitusoftware.babl.proxy.BroadcastProxy;
 import com.aitusoftware.babl.proxy.SessionContainerAdapter;
 import com.aitusoftware.babl.user.Application;
 import com.aitusoftware.babl.user.BroadcastSource;
+import com.aitusoftware.babl.user.ContentType;
 import com.aitusoftware.babl.websocket.broadcast.SessionBroadcast;
-
-import org.agrona.DirectBuffer;
-import org.agrona.ErrorHandler;
-import org.agrona.collections.Long2ObjectHashMap;
-import org.agrona.concurrent.Agent;
-import org.agrona.concurrent.AgentInvoker;
-import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.OneToOneConcurrentArrayQueue;
-import org.agrona.concurrent.ShutdownSignalBarrier;
-import org.agrona.concurrent.SystemEpochClock;
-import org.agrona.concurrent.UnsafeBuffer;
-import org.agrona.concurrent.errors.DistinctErrorLog;
-import org.agrona.concurrent.errors.LoggingErrorHandler;
-
 import io.aeron.Aeron;
-import io.aeron.CommonContext;
 import io.aeron.ExclusivePublication;
 import io.aeron.Publication;
 import io.aeron.Subscription;
+import org.agrona.DirectBuffer;
+import org.agrona.ErrorHandler;
+import org.agrona.collections.Long2ObjectHashMap;
+import org.agrona.concurrent.*;
+import org.agrona.concurrent.errors.DistinctErrorLog;
+import org.agrona.concurrent.errors.LoggingErrorHandler;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Queue;
+
+import static io.aeron.CommonContext.IPC_CHANNEL;
 
 /**
  * Main class for starting a web socket server.

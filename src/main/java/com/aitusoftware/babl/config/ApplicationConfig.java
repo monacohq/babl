@@ -17,18 +17,15 @@
  */
 package com.aitusoftware.babl.config;
 
-import com.aitusoftware.babl.config.SessionContainerConfig.Constants;
+import com.aitusoftware.babl.user.Application;
+import org.agrona.concurrent.Agent;
+import org.agrona.concurrent.IdleStrategy;
+
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-
-import com.aitusoftware.babl.user.Application;
-
-import org.agrona.concurrent.Agent;
-import org.agrona.concurrent.IdleStrategy;
 
 /**
  * Configuration for the user application.
@@ -137,8 +134,6 @@ public final class ApplicationConfig {
                 throw new RuntimeException("Unable to instantiate class " + applicationClassName, e);
             }
         }
-
-        Objects.requireNonNull(application, "application must be set");
 
         if (idleStrategySupplier == null) {
             idleStrategySupplier =

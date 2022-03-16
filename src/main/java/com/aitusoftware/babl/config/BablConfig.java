@@ -20,11 +20,12 @@ package com.aitusoftware.babl.config;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.aitusoftware.babl.config.DeploymentMode.DIRECT;
+
 /**
  * Aggregator for per-component configuration.
  */
-public final class BablConfig
-{
+public final class BablConfig {
     private final PerformanceConfig performanceConfig = new PerformanceConfig();
     private final ApplicationConfig applicationConfig = new ApplicationConfig(performanceConfig);
     private final SessionContainerConfig sessionContainerConfig = new SessionContainerConfig(performanceConfig);
@@ -34,79 +35,74 @@ public final class BablConfig
 
     /**
      * Returns the configuration for the {@code Application}.
+     *
      * @return application configuration
      */
-    public ApplicationConfig applicationConfig()
-    {
+    public ApplicationConfig applicationConfig() {
         return applicationConfig;
     }
 
     /**
      * Returns the configuration for the server.
+     *
      * @return server configuration
      */
-    public SessionContainerConfig sessionContainerConfig()
-    {
+    public SessionContainerConfig sessionContainerConfig() {
         return sessionContainerConfig;
     }
 
     /**
      * Returns the configuration for web socket sessions.
+     *
      * @return session configuration
      */
-    public SessionConfig sessionConfig()
-    {
+    public SessionConfig sessionConfig() {
         return sessionConfig;
     }
 
     /**
      * Returns the configuration for network sockets.
+     *
      * @return socket configuration
      */
-    public SocketConfig socketConfig()
-    {
+    public SocketConfig socketConfig() {
         return socketConfig;
     }
 
     /**
      * Returns the configuration for network proxies.
+     *
      * @return proxy configuration
      */
-    public ProxyConfig proxyConfig()
-    {
+    public ProxyConfig proxyConfig() {
         return proxyConfig;
     }
 
     /**
      * Returns the configuration for performance.
+     *
      * @return performance configuration
      */
-    public PerformanceConfig performanceConfig()
-    {
+    public PerformanceConfig performanceConfig() {
         return performanceConfig;
     }
 
-    public void conclude()
-    {
+    public void conclude() {
         applicationConfig.conclude();
         sessionConfig.conclude();
         sessionContainerConfig.conclude();
-        if (sessionContainerConfig.deploymentMode() == DeploymentMode.DETACHED)
-        {
-            if (sessionContainerConfig.sessionContainerInstanceCount() < 1)
-            {
+        if (sessionContainerConfig.deploymentMode() != DIRECT) {
+            if (sessionContainerConfig.sessionContainerInstanceCount() < 1) {
                 throw new IllegalStateException("Server instance count must be greater than zero");
             }
-            if (proxyConfig.launchMediaDriver())
-            {
+            if (proxyConfig.launchMediaDriver()) {
                 final Path serverDir = Paths.get(sessionContainerConfig.serverDirectory(0));
                 final Path mediaDriverDir = Paths.get(proxyConfig.mediaDriverDir());
 
-                if (mediaDriverDir.startsWith(serverDir))
-                {
+                if (mediaDriverDir.startsWith(serverDir)) {
                     throw new IllegalStateException(
-                        String.format("MediaDriver directory (%s) cannot be created within Server directory (%s)",
-                            mediaDriverDir, serverDir));
+                            String.format("MediaDriver directory (%s) cannot be created within Server directory (%s)",
+                                    mediaDriverDir, serverDir));
                 }
             }
             proxyConfig.conclude();
