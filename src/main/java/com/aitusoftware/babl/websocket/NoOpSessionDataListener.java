@@ -17,41 +17,35 @@
  */
 package com.aitusoftware.babl.websocket;
 
-final class NoOpSessionDataListener extends SessionDataListener
-{
-    @Override
-    void sendDataAvailable()
-    {
+final public class NoOpSessionDataListener extends SessionDataListener {
 
-    }
+  @Override
+  public void sendDataAvailable() {
 
-    @Override
-    void sendDataProcessed()
-    {
+  }
 
-    }
+  @Override
+  public void sendDataProcessed() {
 
-    @Override
-    void receiveDataAvailable()
-    {
+  }
 
-    }
+  @Override
+  public void receiveDataAvailable() {
 
-    @Override
-    void receiveDataProcessed()
-    {
+  }
 
-    }
+  @Override
+  public void receiveDataProcessed() {
 
-    @Override
-    void sessionClosed()
-    {
+  }
 
-    }
+  @Override
+  public void sessionClosed() {
 
-    @Override
-    void init(final long sessionId)
-    {
+  }
 
-    }
+  @Override
+  public void init(final long sessionId) {
+
+  }
 }
