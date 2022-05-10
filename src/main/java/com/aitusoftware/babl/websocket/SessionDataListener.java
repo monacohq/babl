@@ -17,17 +17,17 @@
  */
 package com.aitusoftware.babl.websocket;
 
-public abstract class SessionDataListener
-{
-    abstract void sendDataAvailable();
+public abstract class SessionDataListener {
 
-    abstract void sendDataProcessed();
+  public abstract void sendDataAvailable();
 
-    abstract void receiveDataAvailable();
+  public abstract void sendDataProcessed();
 
-    abstract void receiveDataProcessed();
+  public abstract void receiveDataAvailable();
 
-    abstract void sessionClosed();
+  public abstract void receiveDataProcessed();
 
-    abstract void init(long sessionId);
+  public abstract void sessionClosed();
+
+  public abstract void init(long sessionId);
 }
