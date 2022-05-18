@@ -1,1 +1,1 @@
-0.11.2.2-multi-jvm-finalized
+0.11.2.2-fix-property-name
