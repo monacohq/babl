@@ -117,7 +117,7 @@ public final class PropertiesLoader {
         mapType(Constants.IDLE_STRATEGY_PROPERTY,
                 sessionContainerConfig::serverIdleStrategySupplier, (strategyName) ->
                         (Supplier<IdleStrategy>) () -> ConfigUtil.idleStrategyByName(strategyName), properties);
-        mapInt(Constants.SESSION_CONTAINER_ID, sessionContainerConfig::sessionContainerId, properties);
+        mapInt(Constants.SESSION_CONTAINER_ID_PROPERTY, sessionContainerConfig::sessionContainerId, properties);
         mapType(Constants.AUTO_SCALE_PROPERTY,
                 sessionContainerConfig::autoScale, Boolean::parseBoolean, properties);
 
