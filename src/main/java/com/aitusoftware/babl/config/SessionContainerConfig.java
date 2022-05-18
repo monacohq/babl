@@ -17,15 +17,6 @@
  */
 package com.aitusoftware.babl.config;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.Supplier;
-
 import com.aitusoftware.babl.log.Category;
 import com.aitusoftware.babl.log.Logger;
 import com.aitusoftware.babl.pool.BufferPoolPreAllocator;
@@ -35,10 +26,18 @@ import com.aitusoftware.babl.websocket.ConnectionValidator;
 import com.aitusoftware.babl.websocket.broadcast.MessageTransformer;
 import com.aitusoftware.babl.websocket.routing.ConnectionRouter;
 import com.aitusoftware.babl.websocket.routing.RoundRobinConnectionRouter;
-
 import org.agrona.SystemUtil;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 /**
  * Configuration for the web socket session container.
@@ -734,7 +733,7 @@ public final class SessionContainerConfig {
          * /**
          * System property used to configure session-container-id
          */
-        public static final String SESSION_CONTAINER_ID = "babl.server.id";
+        public static final String SESSION_CONTAINER_ID_PROPERTY = "babl.server.id";
 
         /**
          * Default value for SESSION_CONTAINER_ID
