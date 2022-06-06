@@ -302,10 +302,7 @@ public final class BablServer {
         final ProxyConfig proxyConfig = bablConfig.proxyConfig();
         final int applicationStreamId = proxyConfig.applicationStreamBaseId();
         final Aeron aeron = proxyConfig.aeron();
-        final Publication toApplicationPublication =
-                sessionContainerConfig.sessionContainerInstanceCount() == 1 ?
-                        aeron.addExclusivePublication(IPC_CHANNEL, applicationStreamId) :
-                        aeron.addPublication(IPC_CHANNEL, applicationStreamId);
+        final Publication toApplicationPublication = aeron.addPublication(IPC_CHANNEL, applicationStreamId);
         final int containerId = sessionContainerConfig.sessionContainerId();
         final SessionContainer[] sessionContainers = new SessionContainer[1];
         final ServerMarkFile[] serverMarkFiles = new ServerMarkFile[1];
