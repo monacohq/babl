@@ -1,1 +1,1 @@
-0.11.2.3-fix-publication
+0.11.2.3-more-debug-logging

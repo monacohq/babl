@@ -19,8 +19,6 @@ package com.aitusoftware.babl.websocket;
 
 import static com.aitusoftware.babl.websocket.Constants.NETWORK_BYTE_ORDER;
 
-import java.nio.ByteBuffer;
-
 import com.aitusoftware.babl.config.SessionConfig;
 import com.aitusoftware.babl.log.Category;
 import com.aitusoftware.babl.log.Logger;
@@ -28,7 +26,7 @@ import com.aitusoftware.babl.monitoring.SessionContainerStatistics;
 import com.aitusoftware.babl.monitoring.SessionStatistics;
 import com.aitusoftware.babl.pool.BufferPool;
 import com.aitusoftware.babl.user.ContentType;
-
+import java.nio.ByteBuffer;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -117,6 +115,8 @@ final public class FrameDecoder
         final int payloadLength = assignPayloadLength();
         if (payloadLength < 0 || payloadLength + dstOffset > internalBufferMaxCapacity)
         {
+            Logger.log(Category.DECODE, "Invalid message: Payload length: %d; dstOffset: %d; internalBufferMaxCapacity: %d%n",
+                payloadLength, dstOffset, internalBufferMaxCapacity);
             resetAfterMessageDelivery();
             return SendResult.INVALID_MESSAGE;
         }
@@ -401,6 +401,7 @@ final public class FrameDecoder
             final long largePayloadLength = srcBuffer.getLong(2, NETWORK_BYTE_ORDER);
             if (largePayloadLength > MAX_PAYLOAD_SIZE)
             {
+                Logger.log(Category.DECODE, "Large payload length %d > MAX_PAYLOAD_SIZE: %d%n", largePayloadLength, MAX_PAYLOAD_SIZE);
                 return SendResult.INVALID_MESSAGE;
             }
             payloadLength = (int)largePayloadLength;
