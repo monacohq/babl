@@ -156,6 +156,19 @@ public final class Logger
         }
     }
 
+    public static void log(final Category category, final String format, final long arg0, final long arg1, final long arg2)
+    {
+        if (shouldIgnore(category))
+        {
+            return;
+        }
+        synchronized (Logger.class)
+        {
+            printMessagePrefix(category);
+            OUTPUT_STREAM.printf(format, arg0, arg1, arg2);
+        }
+    }
+
     private static void printMessagePrefix(final Category category)
     {
         OUTPUT_STREAM.print(LocalDateTime.now() + " ");
