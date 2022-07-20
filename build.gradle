@@ -1,21 +1,18 @@
 buildscript {
     repositories {
         maven {
-            // Get the Artifactory url, username, password from system env
-            // If not defined on the system env, then try find them from gradle.properties
-            url((System.getenv("ARTIFACTORY_URL") != null ? System.getenv("ARTIFACTORY_URL") : "${ARTIFACTORY_URL}") + "/deriv-jcenter")
+            url 'https://crypto-onex-391887914434.d.codeartifact.ap-northeast-1.amazonaws.com/maven/central-maven/'
             credentials {
-                username = System.getenv("ARTIFACTORY_USER")
-                password = System.getenv("ARTIFACTORY_APIKEY")
+                username "aws"
+                password System.env.CODEARTIFACT_AUTH_TOKEN
             }
         }
-        mavenCentral()
     }
 }
 
 plugins {
     id 'com.jfrog.artifactory' version '4.18.2' apply false
-    id 'devops-gradle-plugins.jFrogPlugin' version '1.0.1-SNAPSHOT' apply false
+  //  id 'devops-gradle-plugins.jFrogPlugin' version '1.0.1-SNAPSHOT' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'application'
@@ -28,11 +25,11 @@ ext {
 }
 
 apply plugin: 'checkstyle'
-//apply plugin: 'signing'
+apply plugin: 'signing'
 apply plugin: 'maven-publish'
 apply plugin: 'java-library'
 apply plugin: 'com.jfrog.artifactory'
-apply plugin: 'devops-gradle-plugins.jFrogPlugin'
+//apply plugin: 'devops-gradle-plugins.jFrogPlugin'
 
 def bablVersion = file('version.txt').text.trim()
 group = 'com.aitusoftware'
@@ -40,19 +37,19 @@ version = bablVersion
 
 defaultTasks('clean', 'licenseFormat', 'check', 'assemble', 'shadowJar')
 
-jfrog {
-    artifactoryUsername = rootProject.artifactoryUsername
-    artifactoryPassword = rootProject.artifactoryPassword
-    buildName = rootProject.jfrog.buildName
-    mavenDevRepo = 'deriv-maven-dev-local'
-    mavenProdRepo = 'deriv-maven-prod-local'
-}
+//jfrog {
+//    artifactoryUsername = rootProject.artifactoryUsername
+//    artifactoryPassword = rootProject.artifactoryPassword
+//    buildName = rootProject.jfrog.buildName
+//    mavenDevRepo = 'deriv-maven-dev-local'
+//    mavenProdRepo = 'deriv-maven-prod-local'
+//}
 repositories {
     maven {
-        url jfrog.artifactoryUrl + "/deriv-jcenter"
+        url 'https://crypto-onex-391887914434.d.codeartifact.ap-northeast-1.amazonaws.com/maven/central-maven/'
         credentials {
-            username = jfrog.artifactoryUsername
-            password = jfrog.artifactoryPassword
+            username "aws"
+            password System.env.CODEARTIFACT_AUTH_TOKEN
         }
     }
 }
@@ -111,36 +108,39 @@ publishing {
             }
         }
     }
-
     repositories {
         maven {
-            url jfrog.artifactoryUrl + "/deriv-jcenter"
+            url 'https://crypto-onex-391887914434.d.codeartifact.ap-northeast-1.amazonaws.com/maven/central-maven/'
             credentials {
-                username = jfrog.artifactoryUsername
-                password = jfrog.artifactoryPassword
+                username "aws"
+                password System.env.CODEARTIFACT_AUTH_TOKEN
             }
         }
     }
 }
-artifactory {
-    contextUrl = jfrog.artifactoryUrl
-    publish {
-        repository {
-            repoKey = jfrog.mavenDevRepo // The Artifactory repository key to publish to
-            username = jfrog.artifactoryUsername
-            password = jfrog.artifactoryPassword
-        }
-        defaults {
-            // Reference to Gradle publications defined in the build script.
-            // This is how we tell the Artifactory Plugin which artifacts should be
-            // published to Artifactory.
-            publications('mavenJava')
-            publishPom = true
-            publishArtifacts = true
-        }
-    }
-    clientConfig.info.setBuildNumber(jfrog.buildId + jfrog.mavenBuildIdSuffix)
-}
+//artifactory {
+//    contextUrl = jfrog.artifactoryUrl
+//    publish {
+//        repositories {
+//            maven {
+//                url 'https://crypto-onex-132000379639.d.codeartifact.ap-northeast-1.amazonaws.com/maven/central-maven/'
+//                credentials {
+//                    username "aws"
+//                    password System.env.CODEARTIFACT_AUTH_TOKEN
+//                }
+//            }
+//        }
+//        defaults {
+//            // Reference to Gradle publications defined in the build script.
+//            // This is how we tell the Artifactory Plugin which artifacts should be
+//            // published to Artifactory.
+//            publications('mavenJava')
+//            publishPom = true
+//            publishArtifacts = true
+//        }
+//    }
+//    clientConfig.info.setBuildNumber(jfrog.buildId + jfrog.mavenBuildIdSuffix)
+//}
 
 //signing {
 //    sign publishing.publications.mavenJava
