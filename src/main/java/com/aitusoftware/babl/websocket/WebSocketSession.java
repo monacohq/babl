@@ -187,7 +187,21 @@ public final class WebSocketSession implements Pooled, Session
     @Override
     public int close(final DisconnectReason disconnectReason)
     {
-        sessionClosing(Constants.CLOSE_REASON_NORMAL);
+        short closeRetCode = Constants.CLOSE_REASON_NORMAL;
+        if (disconnectReason != null) {
+            switch (disconnectReason) {
+                case BACK_PRESSURE:
+                    closeRetCode = Constants.CLOSE_REASON_BACK_PRESSURE;
+                    break;
+                case APPLICATION:
+                    closeRetCode = Constants.CLOSE_REASON_APPLICATION;
+                    break;
+                case DATA_ERROR:
+                    closeRetCode = Constants.CLOSE_REASON_DATA_ERROR;
+                    break;
+            }
+        }
+        sessionClosing(closeRetCode);
         return SendResult.OK;
     }
 
