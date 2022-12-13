@@ -213,10 +213,14 @@ public final class WebSocketSession implements Pooled, Session
     // For Crypto.com only
     @Override
     public StringBuilder getRemoteAddress(StringBuilder stringBuilderAddress) {
-        if (sbHeaderXForwardValue.length() == 0) {
-            return getRawRemoteIP(stringBuilderAddress);
+        if (sbHeaderCFConnectingIpValue.length() == 0) {
+            if (sbHeaderXForwardValue.length() == 0) {
+                return getRawRemoteIP(stringBuilderAddress);
+            } else {
+                return getXForwardForIP(stringBuilderAddress);
+            }
         } else {
-            return getXForwardForIP(stringBuilderAddress);
+            return getCFConnectingIP(stringBuilderAddress);
         }
     }
 

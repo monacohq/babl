@@ -422,8 +422,7 @@ class WebSocketSessionTest
         session.getRawRemoteIP(sb);
         Assertions.assertEquals("12.1.1.1", sb.toString());
         session.getRemoteAddress(sb);
-        // Still use XForwarded-For (for stable release first)
-        Assertions.assertEquals("11.1.1.1", sb.toString());
+        Assertions.assertEquals("10.1.1.1", sb.toString());
     }
 
     @Test
