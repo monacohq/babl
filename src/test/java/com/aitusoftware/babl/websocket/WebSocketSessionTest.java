@@ -426,7 +426,7 @@ class WebSocketSessionTest
     }
 
     @Test
-    void shouldGetXFowradedForIfAvailable() throws IOException
+    void shouldGetXFowardedForIfAvailable() throws IOException
     {
         // Arrange
         provideSocketData(handshake(), buffer ->
@@ -482,6 +482,29 @@ class WebSocketSessionTest
         Assertions.assertEquals("12.1.1.1", sb.toString());
         session.getRemoteAddress(sb);
         Assertions.assertEquals("12.1.1.1", sb.toString());
+    }
+
+    @Test
+    void shouldGetUserAgent() throws IOException
+    {
+        // Arrange
+        provideSocketData(handshake(), buffer ->
+        {
+            FrameUtil.writeWebSocketFrame(new byte[64], buffer);
+        });
+
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("User-agenT", "Firefox");
+        upgradeConnection(headerMap);
+
+        // Action
+        session.doReceiveWork();
+        session.validated();
+
+        // Assertion
+        StringBuilder sb = new StringBuilder();
+        session.getUserAgent(sb);
+        Assertions.assertEquals("Firefox", sb.toString());
     }
 
     private static Consumer<ByteBuffer> handshake()
