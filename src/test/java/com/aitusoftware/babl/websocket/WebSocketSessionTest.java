@@ -31,12 +31,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.aitusoftware.babl.config.SessionConfig;
@@ -50,6 +54,7 @@ import com.aitusoftware.babl.user.ContentType;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.EpochClock;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -208,7 +213,7 @@ class WebSocketSessionTest
 
         final InOrder order = Mockito.inOrder(sessionDataListener, connectionUpgrade, application);
         order.verify(sessionDataListener).receiveDataAvailable();
-        order.verify(connectionUpgrade).handleUpgrade(any(), any());
+        order.verify(connectionUpgrade).handleUpgrade(any(), any(), any());
         order.verify(sessionDataListener).receiveDataProcessed();
         order.verify(sessionDataListener).receiveDataAvailable();
         order.verify(application).onSessionMessage(
@@ -232,7 +237,7 @@ class WebSocketSessionTest
 
         final InOrder order = Mockito.inOrder(sessionDataListener, connectionUpgrade, application);
         order.verify(sessionDataListener).receiveDataAvailable();
-        order.verify(connectionUpgrade).handleUpgrade(any(), any());
+        order.verify(connectionUpgrade).handleUpgrade(any(), any(), any());
         order.verify(sessionDataListener).receiveDataProcessed();
         order.verify(sessionDataListener).receiveDataAvailable();
         order.verify(application).onSessionMessage(
@@ -264,7 +269,7 @@ class WebSocketSessionTest
 
         final InOrder order = Mockito.inOrder(sessionDataListener, connectionUpgrade, application);
         order.verify(sessionDataListener).receiveDataAvailable();
-        order.verify(connectionUpgrade).handleUpgrade(any(), any());
+        order.verify(connectionUpgrade).handleUpgrade(any(), any(), any());
         order.verify(sessionDataListener).receiveDataProcessed();
         order.verify(sessionDataListener).receiveDataAvailable();
         order.verify(application).onSessionMessage(
@@ -379,12 +384,105 @@ class WebSocketSessionTest
 
         final InOrder order = Mockito.inOrder(sessionDataListener, connectionUpgrade, application);
         order.verify(sessionDataListener).receiveDataAvailable();
-        order.verify(connectionUpgrade).handleUpgrade(any(), any());
+        order.verify(connectionUpgrade).handleUpgrade(any(), any(), any());
         order.verify(sessionDataListener).receiveDataProcessed();
         order.verify(sessionDataListener).receiveDataAvailable();
         order.verify(application).onSessionMessage(
             same(session), eq(ContentType.BINARY), any(DirectBuffer.class), eq(0), eq(totalPayloadSize));
         order.verify(sessionDataListener).receiveDataProcessed();
+    }
+
+    // For Crypto.com
+
+    @Test
+    void shouldGetCFConnectingIPIfAvailable() throws IOException
+    {
+        // Arrange
+        provideSocketData(handshake(), buffer ->
+        {
+            FrameUtil.writeWebSocketFrame(new byte[64], buffer);
+        });
+
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("CF-connecting-ip", "10.1.1.1,10.1.1.2");
+        headerMap.put("X-forwarded-FOR", "11.1.1.1,11.1.1.2");
+        upgradeConnection(headerMap);
+        when(channel.toString()).thenReturn("[connected local=127.0.0.1 remote=hostname/12.1.1.1]");
+
+        // Action
+        session.doReceiveWork();
+        session.validated();
+
+        // Assertion
+        StringBuilder sb = new StringBuilder();
+        session.getCFConnectingIP(sb);
+        Assertions.assertEquals("10.1.1.1", sb.toString());
+        session.getXForwardForIP(sb);
+        Assertions.assertEquals("11.1.1.1", sb.toString());
+        session.getRawRemoteIP(sb);
+        Assertions.assertEquals("12.1.1.1", sb.toString());
+        session.getRemoteAddress(sb);
+        // Still use XForwarded-For (for stable release first)
+        Assertions.assertEquals("11.1.1.1", sb.toString());
+    }
+
+    @Test
+    void shouldGetXFowradedForIfAvailable() throws IOException
+    {
+        // Arrange
+        provideSocketData(handshake(), buffer ->
+        {
+            FrameUtil.writeWebSocketFrame(new byte[64], buffer);
+        });
+
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("X-forwarded-FOR", "11.1.1.1,11.1.1.2");
+        upgradeConnection(headerMap);
+        when(channel.toString()).thenReturn("[connected local=127.0.0.1 remote=hostname/12.1.1.1]");
+
+        // Action
+        session.doReceiveWork();
+        session.validated();
+
+        // Assertion
+        StringBuilder sb = new StringBuilder();
+        session.getCFConnectingIP(sb);
+        Assertions.assertEquals("", sb.toString());
+        session.getXForwardForIP(sb);
+        Assertions.assertEquals("11.1.1.1", sb.toString());
+        session.getRawRemoteIP(sb);
+        Assertions.assertEquals("12.1.1.1", sb.toString());
+        session.getRemoteAddress(sb);
+        Assertions.assertEquals("11.1.1.1", sb.toString());
+    }
+
+    @Test
+    void shouldGetRawRemoteIpIfOthersAreNotAvailable() throws IOException
+    {
+        // Arrange
+        provideSocketData(handshake(), buffer ->
+        {
+            FrameUtil.writeWebSocketFrame(new byte[64], buffer);
+        });
+
+        Map<String, String> headerMap = new HashMap<>();
+        upgradeConnection(headerMap);
+        when(channel.toString()).thenReturn("[connected local=127.0.0.1 remote=hostname/12.1.1.1]");
+
+        // Action
+        session.doReceiveWork();
+        session.validated();
+
+        // Assertion
+        StringBuilder sb = new StringBuilder();
+        session.getCFConnectingIP(sb);
+        Assertions.assertEquals("", sb.toString());
+        session.getXForwardForIP(sb);
+        Assertions.assertEquals("", sb.toString());
+        session.getRawRemoteIP(sb);
+        Assertions.assertEquals("12.1.1.1", sb.toString());
+        session.getRemoteAddress(sb);
+        Assertions.assertEquals("12.1.1.1", sb.toString());
     }
 
     private static Consumer<ByteBuffer> handshake()
@@ -415,11 +513,21 @@ class WebSocketSessionTest
 
     private void upgradeConnection()
     {
+        upgradeConnection(null);
+    }
+
+    private void upgradeConnection(Map<String, String> headerMap)
+    {
         doAnswer((Answer<Boolean>)invocation ->
         {
             final ByteBuffer receiveBuffer = invocation.getArgument(0);
             receiveBuffer.position(receiveBuffer.limit());
+
+            if (headerMap != null) {
+                BiConsumer<CharSequence, CharSequence> headerAcceptor = invocation.getArgument(2);
+                headerMap.forEach(headerAcceptor);
+            }
             return true;
-        }).when(connectionUpgrade).handleUpgrade(any(), any());
+        }).when(connectionUpgrade).handleUpgrade(any(), any(), any());
     }
 }

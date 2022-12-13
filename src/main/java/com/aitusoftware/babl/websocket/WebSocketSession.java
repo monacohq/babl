@@ -19,7 +19,6 @@ package com.aitusoftware.babl.websocket;
 
 import static com.aitusoftware.babl.io.BufferUtil.increaseCapacity;
 
-import com.aitusoftware.babl.config.SessionContainerConfig;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -55,6 +54,11 @@ public final class WebSocketSession implements Pooled, Session
     private static final String HEADER_X_FORWARDED_FOR_PROPERTY = "babl.server.connection.header.xforward";
     private static final String HEADER_X_FORWARDED_FOR = System.getProperty(HEADER_X_FORWARDED_FOR_PROPERTY, "X-FORWARDED-FOR").toUpperCase();
     private final StringBuilder sbHeaderXForwardValue = new StringBuilder(40);
+
+    // Cloudfare header
+    private static final String HEADER_CF_CONNECTING_IP_PROPERTY = "babl.server.connection.header.cfConnectingIp";
+    private static final String HEADER_CF_CONNECTING_IP = System.getProperty(HEADER_CF_CONNECTING_IP_PROPERTY, "CF-CONNECTING-IP").toUpperCase();
+    private final StringBuilder sbHeaderCFConnectingIpValue = new StringBuilder(40);
 
     private final FrameDecoder frameDecoder;
     private final FrameEncoder frameEncoder;
@@ -126,6 +130,7 @@ public final class WebSocketSession implements Pooled, Session
         selectionKey = null;
         closingTimestampMs = 0L;
         sbHeaderXForwardValue.setLength(0);
+        sbHeaderCFConnectingIpValue.setLength(0);
     }
 
     void init(
@@ -205,21 +210,37 @@ public final class WebSocketSession implements Pooled, Session
         return SendResult.OK;
     }
 
+    // For Crypto.com only
     @Override
     public StringBuilder getRemoteAddress(StringBuilder stringBuilderAddress) {
-        stringBuilderAddress.setLength(0);
-
         if (sbHeaderXForwardValue.length() == 0) {
-            if (inputChannel != null) {
-                final String unformatedAddress = inputChannel.toString();
-                final int lastSlashIndex = unformatedAddress.lastIndexOf('/');
-                stringBuilderAddress
-                    .append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
-            }
+            return getRawRemoteIP(stringBuilderAddress);
         } else {
-            stringBuilderAddress.append(sbHeaderXForwardValue);
+            return getXForwardForIP(stringBuilderAddress);
         }
-        return stringBuilderAddress;
+    }
+
+    @Override
+    public StringBuilder getCFConnectingIP(StringBuilder sb) {
+        sb.setLength(0);
+        return sb.append(sbHeaderCFConnectingIpValue);
+    }
+
+    @Override
+    public StringBuilder getXForwardForIP(StringBuilder sb) {
+        sb.setLength(0);
+        return sb.append(sbHeaderXForwardValue);
+    }
+
+    @Override
+    public StringBuilder getRawRemoteIP(StringBuilder sb) {
+        sb.setLength(0);
+        if (inputChannel != null) {
+            final String unformatedAddress = inputChannel.toString();
+            final int lastSlashIndex = unformatedAddress.lastIndexOf('/');
+            sb.append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
+        }
+        return sb;
     }
 
     /**
@@ -503,21 +524,26 @@ public final class WebSocketSession implements Pooled, Session
     }
 
     private void headerAcceptor(CharSequence key, CharSequence value) {
-        if (HEADER_X_FORWARDED_FOR.length() != key.length()) {
+        extractFirstHeaderValue(key, value, HEADER_X_FORWARDED_FOR, sbHeaderXForwardValue);
+        extractFirstHeaderValue(key, value, HEADER_CF_CONNECTING_IP, sbHeaderCFConnectingIpValue);
+    }
+
+    private void extractFirstHeaderValue(CharSequence key, CharSequence value, String headerName, StringBuilder sbHeaderValue) {
+        if (headerName.length() != key.length()) {
             return;
         }
-        for (int i = 0; i < HEADER_X_FORWARDED_FOR.length(); i++) {
-            if (HEADER_X_FORWARDED_FOR.charAt(i) != Character.toUpperCase(key.charAt(i))) {
+        for (int i = 0; i < headerName.length(); i++) {
+            if (headerName.charAt(i) != Character.toUpperCase(key.charAt(i))) {
                 return;
             }
         }
-        sbHeaderXForwardValue.setLength(0);
+        sbHeaderValue.setLength(0);
         for (int i = 0; i < value.length(); i++) {
             final char c = value.charAt(i);
             if (c == ',') {
                 break;
             }
-            sbHeaderXForwardValue.append(c);
+            sbHeaderValue.append(c);
         }
     }
 
