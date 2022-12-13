@@ -168,7 +168,25 @@ final class SessionProxy implements Session, Pooled {
         return sb;
     }
 
-    @Override
+  @Override
+  public StringBuilder getCFConnectingIP(StringBuilder sb) {
+    // Not implemented
+    return sb;
+  }
+
+  @Override
+  public StringBuilder getXForwardForIP(StringBuilder sb) {
+    // Not implemented
+    return sb;
+  }
+
+  @Override
+  public StringBuilder getRawRemoteIP(StringBuilder sb) {
+    // Not implemented
+    return sb;
+  }
+
+  @Override
   public long id() {
     return sessionId;
   }

@@ -32,5 +32,14 @@ public interface Session
 
     int close(DisconnectReason disconnectReason);
 
+    // Modified by Crypto.com
     StringBuilder getRemoteAddress(StringBuilder sb);
+
+    // Cloudfare header IP
+    StringBuilder getCFConnectingIP(StringBuilder sb);
+
+    // First X-Forward-For IP
+    StringBuilder getXForwardForIP(StringBuilder sb);
+
+    StringBuilder getRawRemoteIP(StringBuilder sb);
 }
