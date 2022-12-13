@@ -60,6 +60,10 @@ public final class WebSocketSession implements Pooled, Session
     private static final String HEADER_CF_CONNECTING_IP = System.getProperty(HEADER_CF_CONNECTING_IP_PROPERTY, "CF-CONNECTING-IP").toUpperCase();
     private final StringBuilder sbHeaderCFConnectingIpValue = new StringBuilder(40);
 
+    private static final String HEADER_USER_AGENT_PROPERTY = "babl.server.connection.header.userAgent";
+    private static final String HEADER_USER_AGENT = System.getProperty(HEADER_USER_AGENT_PROPERTY, "USER-AGENT").toUpperCase();
+    private final StringBuilder sbHeaderUserAgentValue = new StringBuilder(100);
+
     private final FrameDecoder frameDecoder;
     private final FrameEncoder frameEncoder;
     private final SessionConfig sessionConfig;
@@ -131,6 +135,7 @@ public final class WebSocketSession implements Pooled, Session
         closingTimestampMs = 0L;
         sbHeaderXForwardValue.setLength(0);
         sbHeaderCFConnectingIpValue.setLength(0);
+        sbHeaderUserAgentValue.setLength(0);
     }
 
     void init(
@@ -245,6 +250,12 @@ public final class WebSocketSession implements Pooled, Session
             sb.append(unformatedAddress, lastSlashIndex + 1, unformatedAddress.length() - 1);
         }
         return sb;
+    }
+
+    @Override
+    public StringBuilder getUserAgent(StringBuilder sb) {
+        sb.setLength(0);
+        return sb.append(sbHeaderUserAgentValue);
     }
 
     /**
@@ -530,6 +541,7 @@ public final class WebSocketSession implements Pooled, Session
     private void headerAcceptor(CharSequence key, CharSequence value) {
         extractFirstHeaderValue(key, value, HEADER_X_FORWARDED_FOR, sbHeaderXForwardValue);
         extractFirstHeaderValue(key, value, HEADER_CF_CONNECTING_IP, sbHeaderCFConnectingIpValue);
+        extractFirstHeaderValue(key, value, HEADER_USER_AGENT, sbHeaderUserAgentValue);
     }
 
     private void extractFirstHeaderValue(CharSequence key, CharSequence value, String headerName, StringBuilder sbHeaderValue) {

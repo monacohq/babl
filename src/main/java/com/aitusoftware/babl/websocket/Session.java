@@ -42,4 +42,6 @@ public interface Session
     StringBuilder getXForwardForIP(StringBuilder sb);
 
     StringBuilder getRawRemoteIP(StringBuilder sb);
+
+    StringBuilder getUserAgent(StringBuilder sb);
 }

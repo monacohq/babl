@@ -187,6 +187,12 @@ final class SessionProxy implements Session, Pooled {
   }
 
   @Override
+  public StringBuilder getUserAgent(StringBuilder sb) {
+    // Not Implemented
+    return sb;
+  }
+
+  @Override
   public long id() {
     return sessionId;
   }
